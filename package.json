@@ -20,8 +20,10 @@
   "type": "commonjs",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.3",
+    "@playwright/test": "^1.53.0",
     "@types/node": "^20.19.1",
     "@zilliz/milvus2-sdk-node": "^2.5.11",
+    "playwright": "^1.53.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "zod": "^3.25.65"
@@ -29,12 +31,16 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@types/chokidar": "^1.7.5",
+    "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
     "@types/supertest": "^6.0.3",
+    "@types/ws": "^8.18.1",
     "chokidar": "^4.0.3",
+    "express": "^5.1.0",
     "jest": "^30.0.0",
     "simple-git": "^3.28.0",
     "supertest": "^7.1.1",
-    "ts-jest": "^29.4.0"
+    "ts-jest": "^29.4.0",
+    "ws": "^8.18.2"
   }
 }
