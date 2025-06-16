@@ -7,7 +7,9 @@
     "build": "tsc",
     "dev": "tsx --watch .mcp/server.ts",
     "start": "node dist/.mcp/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "setup-agents": "tsx scripts/setup-agents.ts",
     "sync-worktrees": "tsx scripts/sync-worktrees.ts",
     "health-check": "tsx scripts/health-check.ts"
@@ -23,5 +25,13 @@
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "zod": "^3.25.65"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@types/jest": "^30.0.0",
+    "@types/supertest": "^6.0.3",
+    "jest": "^30.0.0",
+    "supertest": "^7.1.1",
+    "ts-jest": "^29.4.0"
   }
 }
