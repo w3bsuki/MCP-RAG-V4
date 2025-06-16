@@ -125,6 +125,29 @@
       "comments": []
     },
     {
+      "id": "TASK-104",
+      "title": "AI Chat Architecture Design",
+      "description": "Design the AI chat interface architecture including Vercel AI SDK integration, command processing flow, and agent communication patterns.",
+      "status": "TODO",
+      "priority": "CRITICAL",
+      "assignedTo": "architect",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T22:00:00Z",
+      "updatedAt": "2025-06-16T22:00:00Z",
+      "dependencies": ["TASK-101"],
+      "tags": ["ai", "chat", "architecture"],
+      "estimatedHours": 0.5,
+      "actualHours": 0,
+      "completionCriteria": [
+        "AI chat flow documented",
+        "Command routing design complete",
+        "Vercel AI SDK integration plan",
+        "Security considerations documented"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
       "id": "TASK-301",
       "title": "React Frontend Setup",
       "description": "Initialize React with Vite, TypeScript, Tailwind CSS. Query RAG for React dashboard setup patterns.",
@@ -166,6 +189,78 @@
         "Mock implementations complete",
         ">90% code coverage achieved",
         "All tests passing"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-302",
+      "title": "AI Chat Component Implementation",
+      "description": "Implement the AI chat interface using Vercel AI SDK with streaming responses and Claude API integration.",
+      "status": "TODO",
+      "priority": "CRITICAL",
+      "assignedTo": "builder",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T22:00:00Z",
+      "updatedAt": "2025-06-16T22:00:00Z",
+      "dependencies": ["TASK-104", "TASK-301"],
+      "tags": ["frontend", "ai", "chat", "vercel-ai-sdk"],
+      "estimatedHours": 1.5,
+      "actualHours": 0,
+      "completionCriteria": [
+        "Vercel AI SDK integrated",
+        "Chat UI component working",
+        "Streaming responses functional",
+        "Message history displayed",
+        "Quick action buttons implemented"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-303",
+      "title": "Command Processing Backend",
+      "description": "Create backend service to process natural language commands and route them to appropriate agents.",
+      "status": "TODO",
+      "priority": "CRITICAL",
+      "assignedTo": "builder",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T22:00:00Z",
+      "updatedAt": "2025-06-16T22:00:00Z",
+      "dependencies": ["TASK-104", "TASK-201"],
+      "tags": ["backend", "ai", "command-processing"],
+      "estimatedHours": 1,
+      "actualHours": 0,
+      "completionCriteria": [
+        "Command parser implemented",
+        "Agent routing logic complete",
+        "Task creation automated",
+        "Response formatting done",
+        "Error handling robust"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-502",
+      "title": "AI Chat Integration Tests",
+      "description": "Write comprehensive tests for the AI chat interface including command processing and agent communication.",
+      "status": "TODO",
+      "priority": "HIGH",
+      "assignedTo": "validator",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T22:00:00Z",
+      "updatedAt": "2025-06-16T22:00:00Z",
+      "dependencies": ["TASK-302", "TASK-303"],
+      "tags": ["testing", "ai", "integration"],
+      "estimatedHours": 1,
+      "actualHours": 0,
+      "completionCriteria": [
+        "Chat component tests written",
+        "Command processing tests complete",
+        "Integration tests passing",
+        "Edge cases covered",
+        ">90% coverage achieved"
       ],
       "blockers": [],
       "comments": []
@@ -216,7 +311,7 @@
     }
   },
   "metrics": {
-    "totalTasks": 8,
+    "totalTasks": 12,
     "completedTasks": 0,
     "inProgressTasks": 1,
     "blockedTasks": 0,

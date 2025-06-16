@@ -17,7 +17,15 @@ Build a real-time web dashboard to monitor the MCP/RAG Multi-Agent Development S
 
 ## Core Features
 
-### 1. Agent Status Panel
+### 1. AI Control Interface (NEW - PRIORITY)
+- Chat interface using Vercel AI SDK
+- Connected to Claude API for orchestration
+- Natural language command processing
+- Real-time response streaming
+- Command history and suggestions
+- Quick action buttons for common tasks
+
+### 2. Agent Status Panel
 - Live status for each agent (Active/Idle/Blocked)
 - Current task being worked on
 - Last activity timestamp
@@ -54,16 +62,21 @@ Build a real-time web dashboard to monitor the MCP/RAG Multi-Agent Development S
 
 ### Frontend
 - React with TypeScript
+- Vercel AI SDK for chat interface
 - Real-time updates (WebSocket or polling)
 - Responsive design
 - Dark mode support
 - Chart.js or D3 for visualizations
+- Tailwind CSS for styling
 
 ### Backend
 - Node.js/Express API
+- Anthropic Claude API integration
+- Command routing to appropriate agents
 - File system monitoring for git/coordination files
 - MCP server integration for RAG metrics
 - WebSocket for real-time updates
+- Task queue for command processing
 
 ### Data Sources
 - Git repositories (worktree monitoring)
@@ -72,10 +85,12 @@ Build a real-time web dashboard to monitor the MCP/RAG Multi-Agent Development S
 - System resource monitoring
 
 ## MVP Scope (Phase 1)
-1. Basic agent status display
-2. Task board visualization
-3. Simple git commit feed
-4. Manual refresh (no real-time)
+1. AI chat interface with Vercel AI SDK
+2. Basic agent status display
+3. Task board visualization
+4. Simple git commit feed
+5. Real-time updates via WebSocket
+6. Command execution through chat
 
 ## Success Criteria
 - Dashboard loads in <2 seconds
