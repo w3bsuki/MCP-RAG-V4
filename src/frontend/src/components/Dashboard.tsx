@@ -11,6 +11,7 @@ import type { AgentMetrics } from '../types/monitoring';
 import { MetricsCard } from './MetricsCard';
 import { ActivityFeed } from './ActivityFeed';
 import { AgentStatusGrid } from './AgentStatusGrid';
+import { Chat } from './Chat';
 
 export const Dashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<AgentMetrics[]>([]);
@@ -119,8 +120,8 @@ export const Dashboard: React.FC = () => {
           />
         </div>
 
-        {/* Agent Status Grid and Activity Feed */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Agent Status Grid, Activity Feed, and AI Chat */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Agent Status */}
           <div className="lg:col-span-2">
             <AgentStatusGrid agents={metrics} />
@@ -129,6 +130,19 @@ export const Dashboard: React.FC = () => {
           {/* Activity Feed */}
           <div className="lg:col-span-1">
             <ActivityFeed />
+          </div>
+        </div>
+
+        {/* AI Chat Interface */}
+        <div className="mt-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">AI Command Center</h2>
+              <p className="text-sm text-gray-500">
+                Chat with the AI to monitor agents, manage tasks, and control the system
+              </p>
+            </div>
+            <Chat />
           </div>
         </div>
       </main>
