@@ -5,9 +5,11 @@ This document serves as the master planning and coordination document for the MC
 
 ## Current Sprint
 **Sprint ID**: SPRINT-001  
-**Status**: PLANNING  
-**Start Date**: TBD  
-**End Date**: TBD  
+**Status**: ACTIVE  
+**Start Date**: 2025-06-16  
+**End Date**: 2025-06-23  
+**Project**: PROJECT-001 - Agent Monitoring Dashboard  
+**Location**: projects/project1/  
 
 ## Technical Specifications
 
