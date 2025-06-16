@@ -183,7 +183,7 @@ function generateLaunchCommands(results: SetupResult[]): void {
   results.forEach((result, index) => {
     if (result.success) {
       console.log(`Terminal ${index + 1} (${result.agent}):`);
-      console.log(`cd agents/${result.agent} && claude --mcp-config ../../.mcp/config.json\n`);
+      console.log(`cd agents/${result.agent} && claude --mcp-config ../../.mcp/config.json --dangerously-skip-permissions\n`);
     }
   });
   
@@ -192,7 +192,7 @@ function generateLaunchCommands(results: SetupResult[]): void {
   results.forEach((result, index) => {
     if (result.success) {
       const split = index === 0 ? 'send-keys' : 'split-window \\; send-keys';
-      console.log(`  ${split} "cd agents/${result.agent} && claude --mcp-config ../../.mcp/config.json" C-m \\; \\`);
+      console.log(`  ${split} "cd agents/${result.agent} && claude --mcp-config ../../.mcp/config.json --dangerously-skip-permissions" C-m \\; \\`);
     }
   });
   console.log('  select-layout even-horizontal');
