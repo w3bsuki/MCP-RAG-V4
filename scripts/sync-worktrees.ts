@@ -13,6 +13,10 @@ const COORDINATION_FILES = [
   'coordination/README.md'
 ];
 
+const PROJECT_DIRECTORIES = [
+  'projects/'
+];
+
 interface SyncResult {
   agent: AgentName;
   files: {
