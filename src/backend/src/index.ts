@@ -7,14 +7,17 @@ import { createServer } from 'http';
 import path from 'path';
 import { MonitoringService } from './services/MonitoringService';
 import { WebSocketHandler } from './services/WebSocketHandler';
+import { CommandProcessor } from './services/CommandProcessor';
 import { createMonitoringRouter } from './routes/monitoring';
+import { createChatRouter } from './routes/chat';
+import { createAPIRouter } from './routes/api';
 
 // Load environment variables
 dotenv.config();
 
 // Create Express app
 const app: Express = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Create HTTP server
 const server = createServer(app);
@@ -72,13 +75,14 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Initialize monitoring service
+// Initialize services
 let monitoringService: MonitoringService | null = null;
+let commandProcessor: CommandProcessor | null = null;
 
 async function startServer() {
   try {
     // Configure monitoring
-    const agentWorktreesPath = process.env.AGENT_WORKTREE_PATH || path.join(__dirname, '../../../../agents');
+    const agentWorktreesPath = process.env.AGENT_WORKTREE_PATH || path.join(__dirname, '../../../../../agents');
     
     monitoringService = new MonitoringService({
       agentWorktreesPath,
@@ -105,18 +109,29 @@ async function startServer() {
     // Initialize monitoring
     await monitoringService.initialize();
 
+    // Initialize command processor
+    const coordinationPath = process.env.COORDINATION_PATH || path.join(__dirname, '../../../../../coordination');
+    commandProcessor = new CommandProcessor(coordinationPath);
+
     // Set up WebSocket handler
     new WebSocketHandler(server, monitoringService);
 
     // Add monitoring routes
     app.use('/api/v1/monitoring', createMonitoringRouter(monitoringService));
+    
+    // Add chat routes
+    app.use('/api/v1', createChatRouter(commandProcessor));
+    
+    // Add Vercel AI SDK compatible API routes
+    app.use('/api', createAPIRouter(commandProcessor));
 
     // Start server
     server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔍 Monitoring ${monitoringService!.getSystemMetrics().then(m => m.totalAgents)} agents`);
+      console.log(`🔍 Monitoring agents initialized`);
       console.log(`🌐 WebSocket server ready`);
+      console.log(`🤖 AI Chat endpoints: /api/chat, /api/v1/chat`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
