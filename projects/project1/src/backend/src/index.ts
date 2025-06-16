@@ -25,7 +25,7 @@ const server = createServer(app);
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5174',
   credentials: true
 }));
 app.use(express.json());
@@ -47,30 +47,10 @@ app.get('/api/v1', (_req: Request, res: Response) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
-      agents: '/api/v1/agents',
-      metrics: '/api/v1/metrics',
-      events: '/api/v1/events'
-    }
-  });
-});
-
-// Error handling middleware
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('Error:', err);
-  res.status(500).json({
-    error: {
-      message: err.message || 'Internal server error',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    }
-  });
-});
-
-// 404 handler
-app.use((req: Request, res: Response) => {
-  res.status(404).json({
-    error: {
-      message: 'Not found',
-      path: req.path
+      agents: '/api/v1/monitoring/agents',
+      metrics: '/api/v1/monitoring/metrics',
+      events: '/api/v1/monitoring/events',
+      chat: '/api/chat'
     }
   });
 });
@@ -124,6 +104,27 @@ async function startServer() {
     
     // Add Vercel AI SDK compatible API routes
     app.use('/api', createAPIRouter(commandProcessor));
+
+    // Error handling middleware (must be after routes)
+    app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+      console.error('Error:', err);
+      res.status(500).json({
+        error: {
+          message: err.message || 'Internal server error',
+          ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+        }
+      });
+    });
+
+    // 404 handler (must be last)
+    app.use((req: Request, res: Response) => {
+      res.status(404).json({
+        error: {
+          message: 'Not found',
+          path: req.path
+        }
+      });
+    });
 
     // Start server
     server.listen(PORT, () => {
