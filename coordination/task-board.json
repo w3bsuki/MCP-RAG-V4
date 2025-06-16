@@ -1,32 +1,193 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-06-16T00:00:00Z",
+  "lastUpdated": "2025-06-16T21:30:00Z",
   "updatedBy": "system",
   "sprint": {
     "id": "SPRINT-001",
-    "name": "System Foundation",
-    "status": "PLANNING",
-    "startDate": null,
-    "endDate": null
+    "name": "Agent Monitoring Dashboard",
+    "status": "ACTIVE",
+    "startDate": "2025-06-16",
+    "endDate": "2025-06-23"
   },
   "tasks": [
     {
-      "id": "TASK-001",
-      "title": "Example Task",
-      "description": "This is a template task. Replace with actual tasks.",
+      "id": "TASK-101",
+      "title": "System Architecture Design",
+      "description": "Read PRD and create detailed system architecture including component diagram, data flow, and technology decisions. Query RAG for dashboard architecture patterns.",
       "status": "TODO",
-      "priority": "MEDIUM",
-      "assignedTo": null,
+      "priority": "HIGH",
+      "assignedTo": "architect",
       "createdBy": "system",
-      "createdAt": "2025-06-16T00:00:00Z",
-      "updatedAt": "2025-06-16T00:00:00Z",
+      "createdAt": "2025-06-16T21:30:00Z",
+      "updatedAt": "2025-06-16T21:30:00Z",
       "dependencies": [],
-      "tags": ["template"],
+      "tags": ["architecture", "planning", "design"],
+      "estimatedHours": 0.5,
+      "actualHours": 0,
+      "completionCriteria": [
+        "Architecture diagram in docs/architecture.md",
+        "Technology stack decisions with rationale",
+        "Component breakdown documented",
+        "Data flow documentation complete"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-102",
+      "title": "API Specification",
+      "description": "Design RESTful API endpoints for all monitoring data. Include WebSocket events for real-time updates.",
+      "status": "TODO",
+      "priority": "HIGH",
+      "assignedTo": "architect",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T21:30:00Z",
+      "updatedAt": "2025-06-16T21:30:00Z",
+      "dependencies": ["TASK-101"],
+      "tags": ["api", "design", "backend"],
+      "estimatedHours": 0.5,
+      "actualHours": 0,
+      "completionCriteria": [
+        "API specification in docs/api-spec.md",
+        "All endpoints documented with schemas",
+        "WebSocket event definitions",
+        "Error handling standards defined"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-103",
+      "title": "Database Schema Design",
+      "description": "Design schema for storing metrics, agent states, and historical data. Consider performance for time-series data.",
+      "status": "TODO",
+      "priority": "HIGH",
+      "assignedTo": "architect",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T21:30:00Z",
+      "updatedAt": "2025-06-16T21:30:00Z",
+      "dependencies": ["TASK-101"],
+      "tags": ["database", "design", "backend"],
+      "estimatedHours": 0.3,
+      "actualHours": 0,
+      "completionCriteria": [
+        "Schema design in docs/database-schema.md",
+        "Indexing strategy documented",
+        "Data retention policies defined"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-201",
+      "title": "Backend Project Setup",
+      "description": "Initialize Node.js project with TypeScript, Express, and required dependencies. Query RAG for Node.js project setup patterns.",
+      "status": "TODO",
+      "priority": "HIGH",
+      "assignedTo": "builder",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T21:30:00Z",
+      "updatedAt": "2025-06-16T21:30:00Z",
+      "dependencies": ["TASK-102"],
+      "tags": ["setup", "backend", "infrastructure"],
+      "estimatedHours": 0.5,
+      "actualHours": 0,
+      "completionCriteria": [
+        "package.json with all dependencies",
+        "TypeScript configured",
+        "Express server running",
+        "Project structure created"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-202",
+      "title": "File System Monitor Service",
+      "description": "Implement service to monitor agent worktrees for changes, commits, and file modifications.",
+      "status": "TODO",
+      "priority": "HIGH",
+      "assignedTo": "builder",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T21:30:00Z",
+      "updatedAt": "2025-06-16T21:30:00Z",
+      "dependencies": ["TASK-201"],
+      "tags": ["backend", "monitoring", "service"],
+      "estimatedHours": 1,
+      "actualHours": 0,
+      "completionCriteria": [
+        "FileMonitor class implemented",
+        "Git log parsing working",
+        "File change detection functional",
+        "Events emitted on changes"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-301",
+      "title": "React Frontend Setup",
+      "description": "Initialize React with Vite, TypeScript, Tailwind CSS. Query RAG for React dashboard setup patterns.",
+      "status": "TODO",
+      "priority": "HIGH",
+      "assignedTo": "builder",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T21:30:00Z",
+      "updatedAt": "2025-06-16T21:30:00Z",
+      "dependencies": ["TASK-201"],
+      "tags": ["setup", "frontend", "react"],
+      "estimatedHours": 0.5,
+      "actualHours": 0,
+      "completionCriteria": [
+        "Vite + React + TypeScript configured",
+        "Tailwind CSS integrated",
+        "Folder structure created",
+        "Development server running"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-501",
+      "title": "Backend Unit Tests",
+      "description": "Write comprehensive unit tests for all backend services. Query RAG for testing patterns.",
+      "status": "TODO",
+      "priority": "HIGH",
+      "assignedTo": "validator",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T21:30:00Z",
+      "updatedAt": "2025-06-16T21:30:00Z",
+      "dependencies": ["TASK-202"],
+      "tags": ["testing", "backend", "quality"],
+      "estimatedHours": 1,
+      "actualHours": 0,
+      "completionCriteria": [
+        "Tests for all monitor services",
+        "Mock implementations complete",
+        ">90% code coverage achieved",
+        "All tests passing"
+      ],
+      "blockers": [],
+      "comments": []
+    },
+    {
+      "id": "TASK-601",
+      "title": "Continuous RAG Pattern Storage",
+      "description": "Query RAG before implementing new patterns and store successful implementations.",
+      "status": "IN_PROGRESS",
+      "priority": "MEDIUM",
+      "assignedTo": "all",
+      "createdBy": "system",
+      "createdAt": "2025-06-16T21:30:00Z",
+      "updatedAt": "2025-06-16T21:30:00Z",
+      "dependencies": [],
+      "tags": ["continuous", "learning", "rag"],
       "estimatedHours": 0,
       "actualHours": 0,
       "completionCriteria": [
-        "Criteria 1",
-        "Criteria 2"
+        "Query RAG before each implementation",
+        "Store patterns after success",
+        "Document learnings"
       ],
       "blockers": [],
       "comments": []
@@ -42,7 +203,7 @@
       "completedTasks": []
     },
     "builder": {
-      "id": "builder",  
+      "id": "builder",
       "name": "Full-Stack Builder",
       "activeTasks": [],
       "completedTasks": []
@@ -55,34 +216,11 @@
     }
   },
   "metrics": {
-    "totalTasks": 1,
+    "totalTasks": 8,
     "completedTasks": 0,
-    "inProgressTasks": 0,
+    "inProgressTasks": 1,
     "blockedTasks": 0,
     "averageCompletionTime": 0,
     "velocityTrend": []
-  },
-  "schema": {
-    "task": {
-      "required": ["id", "title", "status", "priority", "createdBy", "createdAt"],
-      "properties": {
-        "id": "string",
-        "title": "string",
-        "description": "string",
-        "status": "enum:taskStatuses",
-        "priority": "enum:priorities",
-        "assignedTo": "string|null",
-        "createdBy": "string",
-        "createdAt": "ISO8601",
-        "updatedAt": "ISO8601",
-        "dependencies": "array<taskId>",
-        "tags": "array<string>",
-        "estimatedHours": "number",
-        "actualHours": "number",
-        "completionCriteria": "array<string>",
-        "blockers": "array<object>",
-        "comments": "array<object>"
-      }
-    }
   }
 }
