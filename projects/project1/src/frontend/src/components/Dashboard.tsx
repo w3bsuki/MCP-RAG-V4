@@ -21,14 +21,43 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/v1/monitoring/agents');
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const response = await fetch(`${apiUrl}/api/v1/monitoring/agents`);
         if (!response.ok) {
           throw new Error('Failed to fetch metrics');
         }
         const data = await response.json();
         setMetrics(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.warn('Failed to fetch metrics, using demo data:', err);
+        // Use demo data for deployment preview
+        setMetrics([
+          {
+            agentId: 'architect',
+            status: 'active',
+            lastActivity: new Date().toISOString(),
+            commitCount: 12,
+            tasksCompleted: 4,
+            currentTask: 'Planning ServiceBot architecture'
+          },
+          {
+            agentId: 'builder', 
+            status: 'active',
+            lastActivity: new Date().toISOString(),
+            commitCount: 28,
+            tasksCompleted: 8,
+            currentTask: 'Implementing user authentication'
+          },
+          {
+            agentId: 'validator',
+            status: 'active', 
+            lastActivity: new Date().toISOString(),
+            commitCount: 15,
+            tasksCompleted: 6,
+            currentTask: 'Writing comprehensive tests'
+          }
+        ]);
+        setError('Using demo data - backend not connected');
       } finally {
         setLoading(false);
       }
