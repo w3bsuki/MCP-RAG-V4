@@ -1,0 +1,88 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-06-16T00:00:00Z",
+  "updatedBy": "system",
+  "sprint": {
+    "id": "SPRINT-001",
+    "name": "System Foundation",
+    "status": "PLANNING",
+    "startDate": null,
+    "endDate": null
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Example Task",
+      "description": "This is a template task. Replace with actual tasks.",
+      "status": "TODO",
+      "priority": "MEDIUM",
+      "assignedTo": null,
+      "createdBy": "system",
+      "createdAt": "2025-06-16T00:00:00Z",
+      "updatedAt": "2025-06-16T00:00:00Z",
+      "dependencies": [],
+      "tags": ["template"],
+      "estimatedHours": 0,
+      "actualHours": 0,
+      "completionCriteria": [
+        "Criteria 1",
+        "Criteria 2"
+      ],
+      "blockers": [],
+      "comments": []
+    }
+  ],
+  "taskStatuses": ["TODO", "IN_PROGRESS", "REVIEW", "BLOCKED", "DONE"],
+  "priorities": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+  "agents": {
+    "architect": {
+      "id": "architect",
+      "name": "System Architect",
+      "activeTasks": [],
+      "completedTasks": []
+    },
+    "builder": {
+      "id": "builder",  
+      "name": "Full-Stack Builder",
+      "activeTasks": [],
+      "completedTasks": []
+    },
+    "validator": {
+      "id": "validator",
+      "name": "Quality Validator",
+      "activeTasks": [],
+      "completedTasks": []
+    }
+  },
+  "metrics": {
+    "totalTasks": 1,
+    "completedTasks": 0,
+    "inProgressTasks": 0,
+    "blockedTasks": 0,
+    "averageCompletionTime": 0,
+    "velocityTrend": []
+  },
+  "schema": {
+    "task": {
+      "required": ["id", "title", "status", "priority", "createdBy", "createdAt"],
+      "properties": {
+        "id": "string",
+        "title": "string",
+        "description": "string",
+        "status": "enum:taskStatuses",
+        "priority": "enum:priorities",
+        "assignedTo": "string|null",
+        "createdBy": "string",
+        "createdAt": "ISO8601",
+        "updatedAt": "ISO8601",
+        "dependencies": "array<taskId>",
+        "tags": "array<string>",
+        "estimatedHours": "number",
+        "actualHours": "number",
+        "completionCriteria": "array<string>",
+        "blockers": "array<object>",
+        "comments": "array<object>"
+      }
+    }
+  }
+}

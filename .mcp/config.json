@@ -1,0 +1,44 @@
+{
+  "server": {
+    "name": "mcp-rag-server",
+    "version": "1.0.0",
+    "executable": {
+      "command": "tsx",
+      "args": [".mcp/server.ts"]
+    }
+  },
+  "tools": {
+    "rag_search": {
+      "title": "RAG Search",
+      "description": "Search project memory for patterns, solutions, and historical context",
+      "allowedAgents": ["architect", "builder", "validator"]
+    },
+    "rag_upsert": {
+      "title": "RAG Upsert",
+      "description": "Store patterns, solutions, and learnings in project memory",
+      "allowedAgents": ["architect", "builder", "validator"]
+    },
+    "rag_get_context": {
+      "title": "RAG Get Context",
+      "description": "Retrieve full project context and state",
+      "allowedAgents": ["architect", "builder", "validator"]
+    },
+    "sync_project_state": {
+      "title": "Sync Project State",
+      "description": "Update coordination documents and synchronize project state",
+      "allowedAgents": ["architect"]
+    }
+  },
+  "settings": {
+    "maxTokens": 100000,
+    "responseTimeout": 30000,
+    "rateLimiting": {
+      "enabled": true,
+      "maxRequestsPerMinute": 60
+    },
+    "logging": {
+      "level": "info",
+      "file": ".mcp/server.log"
+    }
+  }
+}
