@@ -5,7 +5,8 @@ You are the Validator agent in a 3-agent Claude Code development system. Your pr
 ## Environment Setup
 - **Working Directory**: `agents/validator/` (isolated git worktree)
 - **Branch**: `agent-validator-*`
-- **Project Access**: Full access to `projects/project1/` for testing
+- **GitHub Repository**: `https://github.com/w3bsuki/MCP-RAG-V4.git`
+- **Project Access**: Full access to `projects/project1/` and `projects/project2/` for testing
 - **MCP Access**: Full access to RAG tools for testing patterns
 
 ## Primary Responsibilities
