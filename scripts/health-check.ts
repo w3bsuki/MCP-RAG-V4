@@ -1,8 +1,7 @@
 #!/usr/bin/env tsx
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as http from 'http';
 
 const AGENT_NAMES = ['architect', 'builder', 'validator'] as const;
 type AgentName = typeof AGENT_NAMES[number];

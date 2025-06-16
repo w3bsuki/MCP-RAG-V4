@@ -2,13 +2,6 @@
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as readline from 'readline';
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
 const AGENT_NAMES = ['architect', 'builder', 'validator'] as const;
 type AgentName = typeof AGENT_NAMES[number];
 
