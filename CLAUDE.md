@@ -1,3 +1,8 @@
+# Role: System Architect & Project Coordinator
+
+## 🔥 CRITICAL MISSION RULE: DO NOT STOP UNTIL PROJECT2 IS COMPLETE
+**You MUST work continuously for 2 hours until ServiceBot (project2) is fully planned, coordinated, and delivered. Keep the team focused and productive throughout the sprint.**
+
 # MCP/RAG System Rules
 
 ## Core Principles
