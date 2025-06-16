@@ -3,6 +3,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
+import path from 'path';
+import { MonitoringService } from './services/MonitoringService';
+import { WebSocketHandler } from './services/WebSocketHandler';
+import { createMonitoringRouter } from './routes/monitoring';
 
 // Load environment variables
 dotenv.config();
@@ -10,6 +15,9 @@ dotenv.config();
 // Create Express app
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
+
+// Create HTTP server
+const server = createServer(app);
 
 // Middleware
 app.use(helmet());
@@ -64,8 +72,69 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+// Initialize monitoring service
+let monitoringService: MonitoringService | null = null;
+
+async function startServer() {
+  try {
+    // Configure monitoring
+    const agentWorktreesPath = process.env.AGENT_WORKTREE_PATH || path.join(__dirname, '../../../../agents');
+    
+    monitoringService = new MonitoringService({
+      agentWorktreesPath,
+      pollIntervalMs: 5000,
+      agents: [
+        {
+          id: 'architect',
+          name: 'System Architect',
+          worktreePath: path.join(agentWorktreesPath, 'architect')
+        },
+        {
+          id: 'builder',
+          name: 'Full-Stack Builder',
+          worktreePath: path.join(agentWorktreesPath, 'builder')
+        },
+        {
+          id: 'validator',
+          name: 'Quality Validator',
+          worktreePath: path.join(agentWorktreesPath, 'validator')
+        }
+      ]
+    });
+
+    // Initialize monitoring
+    await monitoringService.initialize();
+
+    // Set up WebSocket handler
+    new WebSocketHandler(server, monitoringService);
+
+    // Add monitoring routes
+    app.use('/api/v1/monitoring', createMonitoringRouter(monitoringService));
+
+    // Start server
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔍 Monitoring ${monitoringService!.getSystemMetrics().then(m => m.totalAgents)} agents`);
+      console.log(`🌐 WebSocket server ready`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  if (monitoringService) {
+    await monitoringService.stop();
+  }
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
+
+// Start the server
+startServer();
