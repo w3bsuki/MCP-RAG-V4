@@ -57,4 +57,4 @@ coordination/memory-bank/*.cache
 # Build artifacts
 *.pid
 *.seed
-*.pid.lock
+*.pid.lock.worktrees/
