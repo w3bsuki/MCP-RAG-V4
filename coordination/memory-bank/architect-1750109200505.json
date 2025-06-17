@@ -1,0 +1,15 @@
+{
+  "id": "eeed9194-4f76-4ad8-a752-8e5612dc9e8b",
+  "content": "AI Control Interface Architecture for Multi-Agent Systems\n\nTechnology Stack:\n- Frontend: Vercel AI SDK + React for chat interface with streaming responses\n- Backend: Anthropic Claude API integration with command processing pipeline\n- Architecture: Command pattern with intent analysis and agent routing\n\nCore Components:\n1. Command Processor: Analyzes natural language input to extract intent, entities, and required actions\n2. Agent Router: Routes commands to appropriate agents based on intent and workflow\n3. Response Formatter: Structures responses with markdown and interactive elements\n4. Workflow Executor: Handles complex multi-step operations\n\nCommand Processing Flow:\n1. User input → Intent analysis via Claude API\n2. Command classification (query_status, create_task, execute_build, etc.)\n3. Agent routing based on command type and system state\n4. Parallel execution while streaming response\n5. Result formatting and user feedback\n\nSecurity Features:\n- Command validation and sanitization\n- Permission-based access control\n- Rate limiting and audit logging\n- Secure API key management\n\nIntegration Points:\n- Task board updates via coordination files\n- Agent communication through instruction files\n- Real-time status updates via WebSocket\n- System state monitoring and feedback\n\nThis pattern enables natural language control of complex multi-agent workflows while maintaining security and performance.",
+  "description": "AI-powered control interface for natural language agent orchestration",
+  "tags": [
+    "ai-interface",
+    "chat",
+    "claude-api",
+    "vercel-ai-sdk",
+    "command-processing",
+    "agent-orchestration"
+  ],
+  "agentId": "architect",
+  "timestamp": "2025-06-16T21:26:40.505Z"
+}

@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #000000;
+  --foreground: #ffffff;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+/* Retro Terminal Effects */
+.blink {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* CRT Scanlines Effect (Optional) */
+.crt-scanlines::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    transparent 50%,
+    rgba(0, 255, 0, 0.03) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Button raised/sunken effects */
+.btn-raised {
+  box-shadow: inset 2px 2px 0px #FFFFFF, inset -2px -2px 0px #808080;
+}
+
+.btn-raised:hover {
+  box-shadow: inset 1px 1px 0px #FFFFFF, inset -1px -1px 0px #808080;
+}
+
+.btn-sunken {
+  box-shadow: inset -2px -2px 0px #FFFFFF, inset 2px 2px 0px #808080;
+}
+
+/* DOS-style scrollbar */
+::-webkit-scrollbar {
+  width: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: #C0C0C0;
+  border: 2px inset #C0C0C0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #808080;
+  border: 2px outset #808080;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #606060;
+}

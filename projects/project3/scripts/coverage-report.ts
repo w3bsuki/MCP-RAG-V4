@@ -90,7 +90,7 @@ async function generateCoverageReport() {
         colWidths: [25, 15, 15],
       })
 
-      trend.slice(-5).forEach((entry, index) => {
+      trend.slice(-5).forEach((entry) => {
         const change = entry.improvement || 0
         const changeStr = change > 0 
           ? chalk.green(`+${change.toFixed(2)}%`)

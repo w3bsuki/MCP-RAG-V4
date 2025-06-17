@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import fs from 'fs/promises'
 import path from 'path'
 import { EventEmitter } from 'events'
@@ -136,8 +138,6 @@ export class CoverageMonitor extends EventEmitter {
   }
 
   watchCoverage(): void {
-    const watchPath = path.join(this.outputDir, 'coverage-summary.json')
-    
     // Create a mock watcher for testing
     this.watcher = this.createWatcher()
     
@@ -158,7 +158,7 @@ export class CoverageMonitor extends EventEmitter {
     }
   }
 
-  async getCoverageTrend(days: number = 7): Promise<CoverageTrend[]> {
+  async getCoverageTrend(_days: number = 7): Promise<CoverageTrend[]> {
     try {
       const historyPath = path.join(this.outputDir, 'coverage-history.json')
       const content = await fs.readFile(historyPath, 'utf-8')
@@ -166,9 +166,11 @@ export class CoverageMonitor extends EventEmitter {
       
       // Calculate improvements
       if (history.length > 0) {
-        const firstCoverage = history[0].lines
+        const firstCoverage = history[0]?.lines || 0
         for (let i = 1; i < history.length; i++) {
-          history[i].improvement = history[i].lines - firstCoverage
+          if (history[i]) {
+            history[i]!.improvement = history[i]!.lines - firstCoverage
+          }
         }
       }
       

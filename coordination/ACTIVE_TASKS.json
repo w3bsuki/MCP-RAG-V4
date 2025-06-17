@@ -1,0 +1,361 @@
+{
+  "version": "3.0",
+  "message": "CRITICAL UPDATE: New structure + Project4 pivot to Claude Predictor!",
+  "project": "project5-strike-shop-ecommerce",
+  "updated": "2025-06-17T19:30:00Z",
+  "updatedBy": "human-supervisor",
+  
+  "rules": {
+    "1": "ALL agents MUST read tasks from THIS file only",
+    "2": "NO other TODO files allowed",
+    "3": "Update your section when completing tasks",
+    "4": "Check this file every 15 minutes"
+  },
+  
+  "techStack": {
+    "status": "RECOMMENDED_READY",
+    "decision": "See TECH-STACK-FINAL.md for optimized MVP stack",
+    "core": {
+      "framework": "Next.js 15.1 + React 19.1",
+      "language": "TypeScript 5.5 (strict)",
+      "styling": "Tailwind CSS 4",
+      "components": "shadcn/ui (retro modified)",
+      "charts": "Lightweight Charts + D3 (ASCII)",
+      "state": "Zustand 5",
+      "data": "TanStack Query 6 + Zod",
+      "realtime": "Native WebSocket"
+    },
+    "v0_prompt": "Ready in v0-ULTIMATE-PROMPT.md"
+  },
+  
+  "phases": {
+    "current": "SECURITY_FIXES",
+    "next": "PRODUCTION_DEPLOYMENT", 
+    "timeline": "Project5: 80% complete e-commerce platform - 4 hours to production",
+    "completedTasks": "Architecture analysis complete, ready for Builder execution",
+    "breakdown": {
+      "SECURITY": "TODO: Fix hardcoded API keys, environment variables",
+      "BACKEND_DEPLOY": "TODO: Railway deployment with PostgreSQL",
+      "FRONTEND_DEPLOY": "TODO: Vercel deployment with environment config", 
+      "PRODUCTION_TEST": "TODO: End-to-end testing and validation"
+    }
+  },
+  
+  "tasks": {
+    "architect": {
+      "current": [],
+      "completed": [
+        {
+          "id": "ARCH-P5-ANALYSIS",
+          "task": "Analyze existing Project5 codebase",
+          "status": "COMPLETED",
+          "priority": "HIGH",
+          "description": "Deep analysis of 80% complete project - identify missing features, technical debt, production readiness",
+          "completedAt": "2025-06-17T22:30:00Z",
+          "deliverable": "Created comprehensive README.md + PRODUCTION_TASKS.md with detailed analysis",
+          "findings": "Excellent architecture (80% complete) with critical security fix needed (hardcoded API keys). Ready for production deployment in 4 hours.",
+          "output": "/projects/project5/README.md + /projects/project5/PRODUCTION_TASKS.md"
+        },
+        {
+          "id": "ARCH-TASKS-001",
+          "task": "Create detailed task breakdown for remaining work",
+          "status": "COMPLETED",
+          "priority": "CRITICAL",
+          "description": "Break down AI integration, payments, and deployment into 30-min tasks",
+          "completedAt": "2025-06-17T19:30:00Z",
+          "deliverable": "Created 12 detailed 30-minute tasks for Builder"
+        },
+        {
+          "id": "ARCH-P4-PIVOT",
+          "task": "Review Project4 pivot and provide Claude API architecture",
+          "status": "COMPLETED",
+          "priority": "HIGH",
+          "description": "Read /projects/project4/README.md for new vision. Design Claude integration architecture.",
+          "deliverable": "Guidance on Claude API integration, prompt engineering, caching strategy",
+          "completedAt": "2025-06-17T17:00:00Z",
+          "output": "/projects/project4/CLAUDE_API_ARCHITECTURE.md"
+        }
+      ]
+    },
+    
+    "builder": {
+      "current": [
+        {
+          "id": "P5-SECURITY-001",
+          "task": "Fix critical security vulnerabilities",
+          "status": "TODO",
+          "priority": "CRITICAL",
+          "description": "Remove hardcoded API keys and secure environment variables",
+          "reference": "/projects/project5/PRODUCTION_TASKS.md - SECURITY-001",
+          "steps": [
+            "1. Remove hardcoded REGION_ID from lib/cart-store.backup.ts:9",
+            "2. Add NEXT_PUBLIC_MEDUSA_REGION_ID to environment variables",
+            "3. Update all references to use environment variable",
+            "4. Delete cart-store.backup.ts file completely",
+            "5. Audit codebase for other hardcoded secrets"
+          ],
+          "deliverable": "Security audit passes, no hardcoded secrets in client bundle",
+          "blocksDeployment": true
+        },
+        {
+          "id": "P5-BACKEND-001",
+          "task": "Deploy Medusa backend to Railway",
+          "status": "TODO",
+          "priority": "CRITICAL",
+          "description": "Setup production Medusa.js backend with PostgreSQL",
+          "reference": "/projects/project5/PRODUCTION_TASKS.md - DEPLOY-001",
+          "dependencies": ["P5-SECURITY-001"],
+          "steps": [
+            "1. Create Railway project and add PostgreSQL service",
+            "2. Set environment variables: NODE_ENV, JWT_SECRET, COOKIE_SECRET, DATABASE_URL",
+            "3. Deploy my-medusa-store/ directory to Railway",
+            "4. Run database migrations: railway run medusa db:migrate",
+            "5. Seed database: railway run medusa exec ./src/scripts/seed.ts",
+            "6. Verify health endpoint and admin access"
+          ],
+          "deliverable": "Live Medusa API on Railway with admin panel access",
+          "testingRequired": "Test /health endpoint and store API"
+        },
+        {
+          "id": "P5-FRONTEND-001",
+          "task": "Deploy frontend to Vercel with environment config",
+          "status": "TODO",
+          "priority": "CRITICAL",
+          "description": "Production deployment of Next.js frontend with all integrations",
+          "reference": "/projects/project5/PRODUCTION_TASKS.md - DEPLOY-002",
+          "dependencies": ["P5-BACKEND-001"],
+          "steps": [
+            "1. Configure all environment variables in Vercel dashboard",
+            "2. Set NEXT_PUBLIC_MEDUSA_BACKEND_URL to Railway URL",
+            "3. Add Sanity, Stripe, and Clerk environment variables",
+            "4. Deploy to Vercel with vercel --prod command",
+            "5. Configure custom domain and SSL if available",
+            "6. Test build process and page loading"
+          ],
+          "environmentVariables": [
+            "NEXT_PUBLIC_MEDUSA_BACKEND_URL",
+            "NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY", 
+            "NEXT_PUBLIC_MEDUSA_REGION_ID",
+            "NEXT_PUBLIC_SANITY_PROJECT_ID",
+            "NEXT_PUBLIC_SANITY_DATASET",
+            "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+            "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
+          ],
+          "deliverable": "Live e-commerce site on Vercel domain"
+        },
+        {
+          "id": "P5-INTEGRATION-001", 
+          "task": "Test and validate complete e-commerce flow",
+          "status": "TODO",
+          "priority": "HIGH",
+          "description": "End-to-end testing of all critical user journeys",
+          "reference": "/projects/project5/PRODUCTION_TASKS.md - TEST-001",
+          "dependencies": ["P5-FRONTEND-001"],
+          "steps": [
+            "1. Test homepage loads with products from Medusa",
+            "2. Verify product detail pages and variant selection",
+            "3. Test add to cart and cart persistence across sessions",
+            "4. Complete checkout flow in Stripe test mode",
+            "5. Verify order creation in Medusa admin",
+            "6. Test responsive design on mobile devices",
+            "7. Run Lighthouse audit (target: 70+ score)",
+            "8. Check for console errors and fix any issues"
+          ],
+          "deliverable": "Fully functional e-commerce platform ready for customers",
+          "acceptanceCriteria": [
+            "Complete checkout flow works end-to-end",
+            "No critical console errors",
+            "Mobile experience functional",
+            "Performance within acceptable range"
+          ]
+        },
+        {
+          "id": "P5-OPTIMIZATION-001",
+          "task": "Performance optimization and bundle analysis",
+          "status": "TODO", 
+          "priority": "MEDIUM",
+          "description": "Optimize bundle size and improve Core Web Vitals",
+          "reference": "/projects/project5/PRODUCTION_TASKS.md - PERF-001",
+          "dependencies": ["P5-INTEGRATION-001"],
+          "steps": [
+            "1. Run bundle analyzer: npx bundle-analyzer",
+            "2. Remove unused shadcn/ui components (estimated 23% reduction)",
+            "3. Implement dynamic imports for heavy components",
+            "4. Consolidate duplicate price formatting functions",
+            "5. Configure Next.js image optimization",
+            "6. Set up proper cache headers for static assets",
+            "7. Test performance improvements with Lighthouse"
+          ],
+          "currentBundleSize": "847KB",
+          "targetBundleSize": "500KB", 
+          "deliverable": "30-40% bundle size reduction, improved page load times"
+        },
+        {
+          "id": "P5-MONITORING-001",
+          "task": "Setup production monitoring and analytics",
+          "status": "TODO",
+          "priority": "MEDIUM", 
+          "description": "Configure error monitoring, performance tracking, and business analytics",
+          "dependencies": ["P5-INTEGRATION-001"],
+          "steps": [
+            "1. Setup Vercel Analytics for Core Web Vitals tracking",
+            "2. Configure Sentry for error monitoring and performance",
+            "3. Add conversion tracking for key e-commerce events",
+            "4. Setup uptime monitoring for both frontend and backend",
+            "5. Configure automated backup procedures",
+            "6. Create monitoring dashboard with key metrics",
+            "7. Set up alerting for critical issues"
+          ],
+          "deliverable": "Complete monitoring stack with alerts and dashboards"
+        },
+        {
+          "id": "P5-POLISH-001",
+          "task": "Final production polish and documentation",
+          "status": "TODO",
+          "priority": "LOW",
+          "description": "Final touches, documentation, and launch preparation",
+          "dependencies": ["P5-OPTIMIZATION-001"],
+          "steps": [
+            "1. Add proper error pages (404, 500, maintenance)",
+            "2. Implement proper loading states for all async operations", 
+            "3. Add customer support contact information",
+            "4. Create deployment documentation for future updates",
+            "5. Test all forms with validation and error handling",
+            "6. Verify GDPR compliance features",
+            "7. Prepare launch announcement and user guide"
+          ],
+          "deliverable": "Production-ready e-commerce platform with complete documentation"
+        }
+      ],
+      "completed": [
+        {
+          "id": "DASH-001",
+          "task": "Create market overview with real crypto prices",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T18:00:00Z"
+        },
+        {
+          "id": "DASH-002",
+          "task": "Build portfolio tracker interface",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T18:15:00Z"
+        },
+        {
+          "id": "DASH-003",
+          "task": "Implement price charts (Lightweight Charts)",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T19:00:00Z",
+          "deliverable": "Working chart component with real-time data"
+        },
+        {
+          "id": "AI-001",
+          "task": "Setup Anthropic SDK and create ClaudeService",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T19:45:00Z",
+          "deliverable": "Installed ai + @ai-sdk/anthropic, created /api/ai-predict endpoint"
+        },
+        {
+          "id": "AI-003",
+          "task": "Build AI predictions UI page",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T19:30:00Z",
+          "deliverable": "Complete /ai page with PredictionCard and MarketSentiment components"
+        },
+        {
+          "id": "CHARTS-001",
+          "task": "Implement charts page",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T19:15:00Z",
+          "deliverable": "Enhanced charts with market stats and real-time updates"
+        },
+        {
+          "id": "AI-002",
+          "task": "Create prediction API route",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T19:51:00Z",
+          "deliverable": "/api/predictions/[symbol] with ClaudeService integration, mock auth, free/premium tiers"
+        },
+        {
+          "id": "AI-004",
+          "task": "Implement prompt templates and caching",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T19:53:00Z",
+          "deliverable": "Enhanced prompts.ts, retry logic, 1-hour cache, /api/claude-stats monitoring"
+        },
+        {
+          "id": "PAY-001",
+          "task": "Setup Stripe SDK and products",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T20:05:00Z",
+          "deliverable": "Stripe SDK installed, product configs, pricing page, mock mode for demo"
+        },
+        {
+          "id": "PAY-002",
+          "task": "Build subscription checkout flow",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T20:23:00Z",
+          "deliverable": "/api/checkout/session, success page, verification, working mock mode"
+        },
+        {
+          "id": "PAY-003",
+          "task": "Add basic auth with tier management",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T20:35:00Z",
+          "deliverable": "AuthService, useAuth hook, AuthStatus component, tier-based API access"
+        },
+        {
+          "id": "PAY-004",
+          "task": "Implement usage tracking and limits",
+          "status": "COMPLETED",
+          "completedAt": "2025-06-17T20:45:00Z",
+          "deliverable": "UsageTracker service, UsageDisplay component, API rate limiting, usage UI"
+        }
+      ]
+    },
+    
+    "validator": {
+      "current": [
+        {
+          "id": "VAL-API-001",
+          "task": "Test all API endpoints",
+          "status": "TODO", 
+          "priority": "HIGH",
+          "description": "Validate API responses and error handling",
+          "tools": "Use mcp__fetch__get('http://localhost:3006/api/predictions/btc') to test endpoints"
+        }
+      ],
+      "completed": [
+        {
+          "id": "VAL-VISUAL-001", 
+          "task": "Take screenshots and validate UI quality",
+          "status": "COMPLETED",
+          "priority": "HIGH",
+          "description": "Screenshot validation of /ai page using puppeteer",
+          "completedAt": "2025-06-17T20:15:00Z",
+          "deliverable": "AI page screenshot validation - APPROVED FOR PRODUCTION",
+          "output": "/agents/validator/projects/ai-page-validation.png",
+          "result": "A+ implementation: Perfect retro aesthetic, Claude integration, PredictionCard components, professional UX"
+        }
+      ]
+    }
+  },
+  
+  "communication": {
+    "lastMessage": "🚀 TOOL UPGRADE! All agents now have web search, browser automation, and API testing!",
+    "importantNotes": [
+      "NEW TOOLS AVAILABLE: Check your CLAUDE.md for new MCP tools!", 
+      "WEB SEARCH: Use mcp__web-search__search() for docs/solutions",
+      "API TESTING: Use mcp__fetch__ for testing endpoints",
+      "SCREENSHOTS: Use mcp__puppeteer__ for UI verification",
+      "NO API KEYS NEEDED: All tools are completely FREE",
+      "PROJECT4 CONTINUES: Use new tools to accelerate development!"
+    ],
+    "criticalUpdates": [
+      "🛠️ NEW: Web search capability - find docs and solutions",
+      "🛠️ NEW: Puppeteer - take screenshots, test UI",
+      "🛠️ NEW: Fetch - test APIs and endpoints",
+      "🛠️ NEW: Enhanced filesystem operations",
+      "Example: mcp__web-search__search('Stripe subscription React tutorial')"
+    ]
+  }
+}

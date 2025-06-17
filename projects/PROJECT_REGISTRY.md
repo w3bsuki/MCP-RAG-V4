@@ -3,12 +3,22 @@
 ## Active Projects
 
 ### PROJECT-001: Agent Monitoring Dashboard
-- **Status**: ACTIVE
+- **Status**: COMPLETED
 - **Started**: 2025-06-16
+- **Completed**: 2025-06-17
 - **Location**: projects/project1/
 - **Description**: Real-time dashboard to monitor agent health and task progress
 - **Tech Stack**: React, Express, TypeScript, WebSockets
+- **Deployment**: ✅ Deployed to Vercel
+
+### PROJECT-005: Strike Shop E-commerce Platform
+- **Status**: ACTIVE
+- **Started**: 2025-06-17
+- **Location**: projects/project5/
+- **Description**: Full-stack e-commerce platform with headless architecture
+- **Tech Stack**: Next.js 14, Medusa.js, Sanity CMS, PostgreSQL, Stripe
 - **Agents Assigned**: All (Architect, Builder, Validator)
+- **Phase**: Integration & Optimization (80% Complete)
 
 ## Completed Projects
 _None yet_

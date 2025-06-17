@@ -1,0 +1,14 @@
+{
+  "pages": {
+    "/api/market/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/market/route.js"
+    ],
+    "/api/cryptos/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/cryptos/route.js"
+    ]
+  }
+}

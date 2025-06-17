@@ -1,19 +1,16 @@
 import { MarketContext, ClaudePrediction } from '@/types/prediction'
 
-interface PredictionEngineConfig {
-  apiKey: string
-  model?: string
-}
+// interface PredictionEngineConfig {
+//   apiKey: string
+//   model?: string
+// }
 
 export class PredictionEngine {
-  private apiKey: string
-  private model: string
   private cache: Map<string, { prediction: ClaudePrediction; timestamp: number }> = new Map()
   private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-  constructor(config: PredictionEngineConfig) {
-    this.apiKey = config.apiKey
-    this.model = config.model || 'claude-3-haiku'
+  constructor(/* config: PredictionEngineConfig */) {
+    // Constructor available for future Claude API implementation
   }
 
   async generatePrediction(context: MarketContext): Promise<ClaudePrediction> {
@@ -43,8 +40,8 @@ export class PredictionEngine {
       this.setCache(cacheKey, prediction)
       
       return prediction
-    } catch (error: any) {
-      if (error.message.includes('Rate limit')) {
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Rate limit')) {
         throw new Error('Prediction temporarily unavailable')
       }
       throw error

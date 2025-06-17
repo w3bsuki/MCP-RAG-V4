@@ -1,0 +1,16 @@
+{
+  "id": "a1a74c37-fde5-46ad-9ed0-1a71ded786f1",
+  "content": "// Jest Configuration for TypeScript Backend Testing\nmodule.exports = {\n  preset: 'ts-jest',\n  testEnvironment: 'node',\n  roots: ['<rootDir>/tests'],\n  testMatch: ['**/*.test.ts'],\n  collectCoverageFrom: [\n    'src/**/*.ts',\n    '!src/**/*.d.ts',\n    '!src/**/*.test.ts',\n    '!src/**/index.ts'\n  ],\n  coverageThreshold: {\n    global: {\n      statements: 90,\n      branches: 85,\n      functions: 90,\n      lines: 90\n    }\n  },\n  coverageReporters: ['text', 'lcov', 'html'],\n  moduleNameMapper: {\n    '^@/(.*)$': '<rootDir>/src/$1'\n  },\n  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],\n  clearMocks: true,\n  restoreMocks: true\n};\n\n// Test Setup File\nimport '@testing-library/jest-dom';\n\nbeforeAll(() => {\n  process.env.NODE_ENV = 'test';\n  process.env.LOG_LEVEL = 'error';\n});\n\nafterEach(() => {\n  jest.clearAllMocks();\n  jest.restoreAllMocks();\n});\n\n// Test Data Factories\nexport function createMockUser(overrides = {}) {\n  return {\n    id: 'test-user-123',\n    email: 'test@example.com',\n    name: 'Test User',\n    createdAt: new Date('2025-01-01'),\n    updatedAt: new Date('2025-01-01'),\n    ...overrides\n  };\n}\n\n// Mock Services\nexport class MockFileMonitor extends EventEmitter {\n  private files: Map<string, any> = new Map();\n  \n  start() { return Promise.resolve(); }\n  stop() { return Promise.resolve(); }\n  \n  addFile(path: string, content: any) {\n    this.files.set(path, content);\n    this.emit('change', { path, type: 'added' });\n  }\n}",
+  "description": "Comprehensive Jest testing setup with TypeScript, mock services, and test factories for backend testing",
+  "tags": [
+    "testing",
+    "jest",
+    "typescript",
+    "backend",
+    "mocks",
+    "unit-tests",
+    "test-patterns"
+  ],
+  "agentId": "validator",
+  "timestamp": "2025-06-16T21:14:41.057Z"
+}

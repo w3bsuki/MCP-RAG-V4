@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PredictionEngine } from '@/lib/services/predictionEngine'
-import { PriceService } from '@/lib/services/priceService'
-import { MarketContext } from '@/types/prediction'
+import { MarketContext, ClaudePrediction } from '@/types/prediction'
 
 // Rate limiting
 const requestCounts = new Map<string, { count: number; resetTime: number }>()
@@ -9,16 +8,26 @@ const RATE_LIMIT = 5 // 5 requests per minute
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 
 // Cache for predictions
-const predictionCache = new Map<string, { data: any; expiry: number }>()
+const predictionCache = new Map<string, { data: ClaudePrediction; expiry: number }>()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
-// Initialize services
-const predictionEngine = new PredictionEngine({
-  apiKey: process.env.ANTHROPIC_API_KEY || 'test-key',
-  model: 'claude-3-haiku',
-})
+// Initialize services lazily to allow for mocking
+let predictionEngine: PredictionEngine | null = null
+// Price service removed - now using direct Binance API
 
-const priceService = new PriceService()
+function getPredictionEngine(): PredictionEngine {
+  if (!predictionEngine) {
+    predictionEngine = new PredictionEngine()
+  }
+  return predictionEngine
+}
+
+// Removed unused getPriceService function
+
+// For testing: reset service instances
+export function resetServices() {
+  predictionEngine = null
+}
 
 function checkRateLimit(clientIp: string): boolean {
   const now = Date.now()
@@ -40,7 +49,7 @@ function checkRateLimit(clientIp: string): boolean {
   return true
 }
 
-function getCachedPrediction(key: string): any | null {
+function getCachedPrediction(key: string): ClaudePrediction | null {
   const cached = predictionCache.get(key)
   if (cached && Date.now() < cached.expiry) {
     return cached.data
@@ -49,7 +58,7 @@ function getCachedPrediction(key: string): any | null {
   return null
 }
 
-function setCachedPrediction(key: string, data: any): void {
+function setCachedPrediction(key: string, data: ClaudePrediction): void {
   predictionCache.set(key, {
     data,
     expiry: Date.now() + CACHE_DURATION,
@@ -112,7 +121,7 @@ async function handlePost(req: NextRequest) {
     }
 
     // Generate prediction
-    const prediction = await predictionEngine.generatePrediction(marketContext)
+    const prediction = await getPredictionEngine().generatePrediction(marketContext)
 
     const response = {
       prediction,
@@ -123,14 +132,14 @@ async function handlePost(req: NextRequest) {
       },
     }
 
-    // Cache the response
-    setCachedPrediction(cacheKey, response)
+    // Cache the prediction
+    setCachedPrediction(cacheKey, prediction)
 
     return NextResponse.json(response)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Prediction error:', error)
     
-    if (error.message.includes('Claude API unavailable')) {
+    if (error instanceof Error && error.message.includes('Claude API unavailable')) {
       return NextResponse.json(
         { error: 'Prediction service temporarily unavailable' },
         { status: 503 }
@@ -184,7 +193,20 @@ async function handleGet(req: NextRequest) {
   )
 }
 
-export default async function handler(req: any, res: any) {
+interface MockRequest {
+  method?: string;
+  body: { symbol?: string; timeframe?: string };
+  headers?: Record<string, string>;
+  query?: Record<string, string>;
+}
+
+interface MockResponse {
+  _getStatusCode?: () => number;
+  status: (code: number) => MockResponse;
+  json: (data: unknown) => void;
+}
+
+export default async function handler(req: MockRequest, res: MockResponse) {
   // Support for node-mocks-http
   if (res && res._getStatusCode) {
     // node-mocks-http request
@@ -204,7 +226,7 @@ export default async function handler(req: any, res: any) {
       }
 
       // Check rate limit
-      const clientIp = req.headers['x-forwarded-for'] || 'anonymous'
+      const clientIp = req.headers?.['x-forwarded-for'] || 'anonymous'
       if (!checkRateLimit(clientIp)) {
         res.status(429).json({ error: 'Rate limit exceeded' })
         return
@@ -238,7 +260,7 @@ export default async function handler(req: any, res: any) {
         }
 
         // Generate prediction
-        const prediction = await predictionEngine.generatePrediction(marketContext)
+        const prediction = await getPredictionEngine().generatePrediction(marketContext)
 
         const response = {
           prediction,
@@ -249,22 +271,22 @@ export default async function handler(req: any, res: any) {
           },
         }
 
-        // Cache the response
-        setCachedPrediction(cacheKey, response)
+        // Cache the prediction
+        setCachedPrediction(cacheKey, prediction)
 
         res.status(200).json(response)
-      } catch (error: any) {
+      } catch (error) {
         console.error('Prediction error:', error)
         
-        if (error.message.includes('Claude API unavailable')) {
+        if (error instanceof Error && error.message.includes('Claude API unavailable')) {
           res.status(503).json({ error: 'Prediction service temporarily unavailable' })
         } else {
           res.status(500).json({ error: 'Internal server error' })
         }
       }
     } else if (req.method === 'GET') {
-      const symbol = req.query.symbol
-      const symbols = req.query.symbols
+      const symbol = req.query?.symbol
+      const symbols = req.query?.symbols
 
       if (symbols) {
         // Handle multiple symbols
@@ -294,20 +316,7 @@ export default async function handler(req: any, res: any) {
     } else {
       res.status(405).json({ error: 'Method not allowed' })
     }
-  } else {
-    // NextRequest handling
-    if (req.method === 'POST') {
-      return handlePost(req)
-    }
-    
-    if (req.method === 'GET') {
-      return handleGet(req)
-    }
-
-    return NextResponse.json(
-      { error: 'Method not allowed' },
-      { status: 405 }
-    )
+    return
   }
 }
 

@@ -19,9 +19,9 @@ export const handlers = [
 
   // Mock prediction API endpoint
   http.post('/api/predictions', async ({ request }) => {
-    const body = await request.json()
+    const body = await request.json() as { symbol?: string }
     return HttpResponse.json({
-      symbol: body.symbol,
+      symbol: body?.symbol || 'BTC',
       sevenDayTarget: 48000,
       thirtyDayTarget: 52000,
       confidence: 75,
