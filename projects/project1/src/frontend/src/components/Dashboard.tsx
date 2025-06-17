@@ -16,7 +16,7 @@ import { Chat } from './Chat';
 export const Dashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<AgentMetrics[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // const [error] = useState<string | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
@@ -103,17 +103,7 @@ export const Dashboard: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <ExclamationTriangleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Dashboard</h2>
-          <p className="text-gray-500">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  // Error state removed - using demo mode instead
 
   const totalCommits = metrics.reduce((sum, agent) => sum + agent.totalCommits, 0);
   const totalFiles = metrics.reduce((sum, agent) => sum + agent.totalFiles, 0);
