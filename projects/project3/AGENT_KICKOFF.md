@@ -31,7 +31,7 @@ Build a crypto prediction platform that:
 ## 📁 Project Resources
 
 - **PRD**: `/projects/project3/PRD_FINAL.md`
-- **Agent Rules**: `/projects/project3/AGENT_RULES.md`  
+- **Project Rules**: `/projects/project3/CLAUDE.md`  
 - **Tech Stack**: Next.js 14, TypeScript, Claude API, PostgreSQL
 - **Target Coverage**: 95% minimum
 
