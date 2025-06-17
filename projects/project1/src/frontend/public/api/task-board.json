@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-06-17T12:00:00Z",
+  "agents": {
+    "architect": {
+      "id": "architect",
+      "name": "System Architect",
+      "activeTasks": [],
+      "completedTasks": []
+    },
+    "builder": {
+      "id": "builder",
+      "name": "Full-Stack Builder",
+      "activeTasks": [
+        "TASK-P3-001",
+        "TASK-P3-002",
+        "TASK-P3-003",
+        "TASK-P3-004",
+        "TASK-P3-005",
+        "TASK-P3-006",
+        "TASK-P3-007",
+        "TASK-P3-008",
+        "TASK-P3-010"
+      ],
+      "completedTasks": []
+    },
+    "validator": {
+      "id": "validator",
+      "name": "Quality Validator",
+      "activeTasks": [
+        "TASK-P3-009"
+      ],
+      "completedTasks": []
+    }
+  },
+  "metrics": {
+    "totalTasks": 10,
+    "completedTasks": 0,
+    "inProgressTasks": 0,
+    "blockedTasks": 0,
+    "targetCoverage": 95,
+    "currentCoverage": 0,
+    "testsWritten": 66,
+    "testsPassing": 0
+  }
+}
