@@ -1,19 +1,32 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals'
 import { PriceService } from '@/lib/services/priceService'
-import { WebSocket } from 'ws'
+import WebSocket from 'ws'
 
 // Mock WebSocket
 jest.mock('ws')
+const MockedWebSocket = jest.mocked(WebSocket)
 
 describe('PriceService', () => {
   let priceService: PriceService
-  let mockWebSocket: jest.Mocked<WebSocket>
+  let mockWebSocket: any
 
   beforeEach(() => {
+    // Reset WebSocket mock
+    jest.clearAllMocks()
+    
+    // Create a mock instance
+    mockWebSocket = {
+      on: jest.fn(),
+      close: jest.fn(),
+      send: jest.fn()
+    }
+    
+    // Make WebSocket constructor return our mock
+    MockedWebSocket.mockImplementation(() => mockWebSocket as any)
+    
     // This test is written BEFORE the implementation exists
     // It will fail initially, driving our implementation
     priceService = new PriceService()
-    mockWebSocket = new WebSocket('') as jest.Mocked<WebSocket>
   })
 
   afterEach(() => {
@@ -26,7 +39,7 @@ describe('PriceService', () => {
       
       priceService.connectToBinance(symbol)
       
-      expect(WebSocket).toHaveBeenCalledWith(
+      expect(MockedWebSocket).toHaveBeenCalledWith(
         `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`
       )
     })
@@ -67,7 +80,7 @@ describe('PriceService', () => {
       // Fast-forward reconnection timer
       jest.advanceTimersByTime(5000)
 
-      expect(WebSocket).toHaveBeenCalledTimes(2)
+      expect(MockedWebSocket).toHaveBeenCalledTimes(2)
       jest.useRealTimers()
     })
 
@@ -78,7 +91,7 @@ describe('PriceService', () => {
         priceService.connectToBinance(symbol)
       })
 
-      expect(WebSocket).toHaveBeenCalledTimes(symbols.length)
+      expect(MockedWebSocket).toHaveBeenCalledTimes(symbols.length)
     })
 
     it('should emit error events on WebSocket errors', (done) => {

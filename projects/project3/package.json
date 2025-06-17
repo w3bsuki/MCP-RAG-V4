@@ -15,7 +15,8 @@
   "dependencies": {
     "next": "15.3.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -35,6 +36,7 @@
     "jest-junit": "^16.0.0",
     "msw": "^2.10.2",
     "node-fetch": "^2.7.0",
+    "node-mocks-http": "^1.14.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.2.5",
     "typescript": "^5"

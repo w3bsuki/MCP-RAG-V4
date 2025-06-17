@@ -17,6 +17,7 @@ export const Dashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<AgentMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -60,7 +61,8 @@ export const Dashboard: React.FC = () => {
             linesRemoved: 100
           }
         ]);
-        setError('Using demo data - backend not connected');
+        setIsDemoMode(true);
+        console.warn('Using demo data - backend not connected');
       } finally {
         setLoading(false);
       }
@@ -120,6 +122,22 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Demo Data Warning */}
+      {isDemoMode && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+            <div className="flex">
+              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-400" />
+              <div className="ml-3">
+                <p className="text-sm text-yellow-700">
+                  Demo mode - Backend not connected. Showing sample data for preview.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

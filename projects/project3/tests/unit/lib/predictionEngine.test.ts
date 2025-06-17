@@ -143,9 +143,9 @@ describe('PredictionEngine', () => {
       const prompt = predictionEngine.buildPrompt(mockMarketContext)
 
       expect(prompt).toContain('BTC')
-      expect(prompt).toContain('45000')
+      expect(prompt).toContain('45,000') // Changed to match formatted number
       expect(prompt).toContain('RSI: 55')
-      expect(prompt).toContain('Fear & Greed: 65')
+      expect(prompt).toContain('Fear & Greed Index: 65') // Changed to match actual text
       expect(prompt).toContain('Bitcoin ETF sees record inflows')
     })
 

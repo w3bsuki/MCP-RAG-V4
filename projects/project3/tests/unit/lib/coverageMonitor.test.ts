@@ -1,14 +1,17 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals'
 import { CoverageMonitor } from '@/lib/monitoring/coverageMonitor'
-import fs from 'fs/promises'
-import path from 'path'
 
-// Mock fs module
-jest.mock('fs/promises')
+// Create mocks before importing
+const mockReadFile = jest.fn()
+const mockWriteFile = jest.fn()
+
+jest.mock('fs/promises', () => ({
+  readFile: mockReadFile,
+  writeFile: mockWriteFile,
+}))
 
 describe('CoverageMonitor', () => {
   let monitor: CoverageMonitor
-  const mockFs = fs as jest.Mocked<typeof fs>
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -34,7 +37,7 @@ describe('CoverageMonitor', () => {
         },
       }
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
+      mockReadFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
 
       const result = await monitor.checkCoverage()
 
@@ -53,7 +56,7 @@ describe('CoverageMonitor', () => {
         },
       }
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
+      mockReadFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
 
       const result = await monitor.checkCoverage()
 
@@ -68,7 +71,9 @@ describe('CoverageMonitor', () => {
     })
 
     it('should handle missing coverage file', async () => {
-      mockFs.readFile.mockRejectedValue(new Error('ENOENT: no such file'))
+      const error = new Error('ENOENT: no such file') as any
+      error.code = 'ENOENT'
+      mockReadFile.mockRejectedValue(error)
 
       await expect(monitor.checkCoverage()).rejects.toThrow(
         'Coverage report not found. Run tests first.'
@@ -87,7 +92,7 @@ describe('CoverageMonitor', () => {
         },
       }
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
+      mockReadFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
 
       const report = await monitor.generateReport()
 
@@ -112,7 +117,7 @@ describe('CoverageMonitor', () => {
         },
       }
 
-      mockFs.readFile
+      mockReadFile
         .mockResolvedValueOnce(JSON.stringify({ total: {} }))
         .mockResolvedValueOnce(JSON.stringify(mockCoverageDetail))
 
@@ -137,6 +142,18 @@ describe('CoverageMonitor', () => {
       }
 
       jest.spyOn(monitor as any, 'createWatcher').mockReturnValue(mockWatcher)
+
+      // Mock the checkCoverage method to succeed
+      const mockCoverageSummary = {
+        total: {
+          lines: { pct: 96.5 },
+          functions: { pct: 92.3 },
+          branches: { pct: 91.8 },
+          statements: { pct: 95.7 },
+        },
+      }
+      mockReadFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
+      mockWriteFile.mockResolvedValue(undefined)
 
       monitor.on('coverageUpdate', (result) => {
         expect(result).toHaveProperty('passed')
@@ -170,7 +187,7 @@ describe('CoverageMonitor', () => {
         { timestamp: '2024-01-01T12:00:00Z', lines: 95.2 },
       ]
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(mockHistory))
+      mockReadFile.mockResolvedValue(JSON.stringify(mockHistory))
 
       const trend = await monitor.getCoverageTrend()
 
@@ -180,7 +197,9 @@ describe('CoverageMonitor', () => {
     })
 
     it('should handle empty history', async () => {
-      mockFs.readFile.mockRejectedValue(new Error('ENOENT'))
+      const error = new Error('ENOENT') as any
+      error.code = 'ENOENT'
+      mockReadFile.mockRejectedValue(error)
 
       const trend = await monitor.getCoverageTrend()
 
@@ -199,7 +218,7 @@ describe('CoverageMonitor', () => {
         },
       }
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
+      mockReadFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
 
       await expect(monitor.enforceCoverage()).rejects.toThrow(
         'Coverage requirements not met'
@@ -216,7 +235,7 @@ describe('CoverageMonitor', () => {
         },
       }
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
+      mockReadFile.mockResolvedValue(JSON.stringify(mockCoverageSummary))
 
       await expect(monitor.enforceCoverage()).resolves.not.toThrow()
     })
@@ -236,7 +255,7 @@ describe('CoverageMonitor', () => {
         },
       }
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(mockCoverageData))
+      mockReadFile.mockResolvedValue(JSON.stringify(mockCoverageData))
 
       const uncovered = await monitor.getUncoveredFiles(80)
 
