@@ -461,7 +461,7 @@ class EnhancedMCPServer {
   }
 
   private async savePattern(pattern: Pattern) {
-    const dir = join(process.cwd(), 'agents', pattern.agentId, 'coordination', 'memory-bank');
+    const dir = join(process.cwd(), 'coordination', 'memory-bank');
     const filename = `${pattern.id}.json`;
     await writeFile(join(dir, filename), JSON.stringify(pattern, null, 2));
   }
