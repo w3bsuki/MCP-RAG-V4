@@ -1,0 +1,15 @@
+{
+  "id": "b7e4bf7e-5433-483b-9bf3-5e21dc6b9c5f",
+  "content": "Component Architecture for Dashboard Applications\n\nFolder Structure Pattern:\n```\nsrc/\n├── components/\n│   ├── layout/ (AppLayout, Header, Sidebar, Footer)\n│   ├── [domain]/ (agents/, tasks/, rag/, git/, system/)\n│   └── common/ (reusable UI components)\n├── hooks/ (custom hooks for data subscription)\n├── services/ (API clients, WebSocket, utilities)\n├── store/ (state management slices)\n├── types/ (TypeScript definitions)\n└── utils/ (helpers, formatters, constants)\n```\n\nDesign Principles:\n1. Domain-driven component organization\n2. Separation of presentation and business logic\n3. Custom hooks for data subscription and state management\n4. Atomic design with reusable components\n5. TypeScript interfaces for strong typing\n\nState Management Pattern:\n- Zustand stores organized by domain (agents, tasks, rag, git, system)\n- Real-time updates via WebSocket with optimistic UI\n- Error boundaries for graceful failure handling\n- Connection status management with retry logic\n\nComponent Communication:\n- Props for parent-child communication\n- Custom hooks for shared state access\n- Event emitters for cross-component communication\n- Context providers for global state (theme, auth)\n\nThis structure provides maintainable, scalable component architecture for complex dashboard applications.",
+  "description": "Scalable component architecture pattern for React dashboard applications",
+  "tags": [
+    "react",
+    "component-architecture",
+    "dashboard",
+    "folder-structure",
+    "state-management",
+    "typescript"
+  ],
+  "agentId": "architect",
+  "timestamp": "2025-06-16T21:26:48.683Z"
+}

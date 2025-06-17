@@ -1,0 +1,15 @@
+{
+  "id": "0730dde9-7359-47bc-98b8-265149b8fe1b",
+  "content": "// API Integration Test Template with Supertest\nimport request from 'supertest';\nimport { Application } from 'express';\nimport { TestDatabase } from '../helpers/test-database';\n\ndescribe('API: [ENDPOINT_NAME]', () => {\n  let app: Application;\n  let db: TestDatabase;\n  let authToken: string;\n\n  beforeAll(async () => {\n    db = await TestDatabase.create();\n    app = createApp({ database: db });\n    \n    // Create test user and authenticate\n    const user = await db.users.create({\n      email: 'test@example.com',\n      password: 'TestPass123!'\n    });\n    \n    const loginResponse = await request(app)\n      .post('/api/auth/login')\n      .send({ email: 'test@example.com', password: 'TestPass123!' });\n    \n    authToken = loginResponse.body.token;\n  });\n\n  afterAll(async () => {\n    await db.cleanup();\n  });\n\n  describe('GET /api/[endpoint]', () => {\n    it('should return 200 with valid data', async () => {\n      const response = await request(app)\n        .get('/api/[endpoint]')\n        .set('Authorization', `Bearer ${authToken}`)\n        .expect(200);\n\n      expect(response.body).toMatchObject({\n        success: true,\n        data: expect.any(Array)\n      });\n    });\n\n    it('should return 401 without authentication', async () => {\n      await request(app)\n        .get('/api/[endpoint]')\n        .expect(401);\n    });\n  });\n\n  describe('POST /api/[endpoint]', () => {\n    it('should create resource with valid data', async () => {\n      const validData = { /* data */ };\n\n      const response = await request(app)\n        .post('/api/[endpoint]')\n        .set('Authorization', `Bearer ${authToken}`)\n        .send(validData)\n        .expect(201);\n\n      // Verify in database\n      const created = await db.query('SELECT * FROM table WHERE id = ?', [response.body.data.id]);\n      expect(created).toBeDefined();\n    });\n  });\n});",
+  "description": "Complete API integration test template using Supertest for Express APIs with authentication and database verification",
+  "tags": [
+    "testing",
+    "api",
+    "integration",
+    "supertest",
+    "express",
+    "authentication"
+  ],
+  "agentId": "validator",
+  "timestamp": "2025-06-16T21:23:33.252Z"
+}
