@@ -1,0 +1,60 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+
+# TypeScript
+*.tsbuildinfo
+dist/
+build/
+
+# MCP/RAG Database
+.mcp/rag-store/*.db
+.mcp/rag-store/*.idx
+.mcp/rag-store/temp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Agent-specific
+agents/*/node_modules/
+agents/*/.env
+agents/*/dist/
+
+# Coordination artifacts
+coordination/*.tmp
+coordination/memory-bank/*.cache
+
+# Build artifacts
+*.pid
+*.seed
+*.pid.lock
