@@ -48,8 +48,10 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validatePhone(phone: string): boolean {
-  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/
-  return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
+  // Must be at least 10 digits, start with digit 1-9, and be all numbers
+  const phoneRegex = /^[\+]?[1-9][\d]{9,15}$/
+  return phoneRegex.test(cleaned)
 }
 
 export function truncateText(text: string, maxLength: number): string {

@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth'
 import AIChat from '@/components/AIChat'
 import { AIService, type AdData } from '@/lib/ai'
-import { Camera, MapPin, DollarSign, Tag, Eye } from 'lucide-react'
+import { Eye } from 'lucide-react'
 
 const CATEGORIES = [
   'Home & Garden',
@@ -70,7 +70,7 @@ export default function CreateAd() {
       }
 
       // Insert service ad
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('service_ads')
         .insert({
           provider_id: user.id,

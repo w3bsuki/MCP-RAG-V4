@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth'
-import { Send, User, MessageCircle, Clock } from 'lucide-react'
+import { Send, User, MessageCircle } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import type { Message, Profile } from '@/types/supabase'
 
@@ -58,13 +58,15 @@ export default function Messages() {
         
         data?.forEach((message: any) => {
           const otherUserId = message.sender_id === user?.id ? message.recipient_id : message.sender_id
-          const conversationKey = `${Math.min(user?.id || '', otherUserId)}-${Math.max(user?.id || '', otherUserId)}`
+          const userId1 = user?.id || ''
+          const userId2 = otherUserId
+          const conversationKey = userId1 < userId2 ? `${userId1}-${userId2}` : `${userId2}-${userId1}`
           
           if (!conversationMap.has(conversationKey) || 
               new Date(message.created_at) > new Date(conversationMap.get(conversationKey).created_at)) {
             conversationMap.set(conversationKey, {
-              user1_id: Math.min(user?.id || '', otherUserId),
-              user2_id: Math.max(user?.id || '', otherUserId),
+              user1_id: userId1 < userId2 ? userId1 : userId2,
+              user2_id: userId1 < userId2 ? userId2 : userId1,
               service_ad_id: message.service_ad_id,
               last_message_at: message.created_at,
               other_user: message.sender_id === user?.id ? message.recipient : message.sender,

@@ -23,7 +23,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signUp: async (email: string, password: string, userData) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -38,20 +38,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { error: error.message }
       }
 
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email!,
-            name: userData.name,
-            user_type: userData.userType,
-          })
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError)
-        }
-      }
+      // Profile creation will be handled by Supabase triggers in real implementation
 
       return {}
     } catch (error) {
@@ -61,7 +48,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signIn: async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })

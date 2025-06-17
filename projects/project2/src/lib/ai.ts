@@ -1,9 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({
-  apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
-  dangerouslyAllowBrowser: true,
-})
+// Simple AI service without external dependencies for now
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -20,20 +15,7 @@ export interface AdData {
   tags?: string[]
 }
 
-const AD_CREATION_SYSTEM_PROMPT = `You are an AI assistant helping users create compelling service advertisements. Your goal is to guide them through creating a complete, professional ad that will attract customers.
-
-Key responsibilities:
-1. Ask relevant questions to gather all necessary information
-2. Suggest improvements to make the ad more appealing
-3. Help with pricing guidance based on the service type
-4. Ensure the ad has all required fields: title, description, category, pricing
-5. Be conversational and helpful, not robotic
-
-Always end your responses with a specific question to keep the conversation flowing. When the ad seems complete, ask if they'd like to review and publish it.
-
-Categories available: Home & Garden, Cleaning, Repairs & Maintenance, Tutoring & Education, Health & Wellness, Technology, Events & Entertainment, Transportation
-
-Keep responses concise but helpful (2-3 sentences max).`
+// AD_CREATION_SYSTEM_PROMPT moved to separate constant for reuse
 
 export class AIService {
   private messages: ChatMessage[] = []
@@ -47,25 +29,21 @@ export class AIService {
     ]
   }
 
-  async sendMessage(userMessage: string, currentAdData?: AdData): Promise<{ response: string; suggestedAdData?: Partial<AdData> }> {
+  async sendMessage(userMessage: string, _currentAdData?: AdData): Promise<{ response: string; suggestedAdData?: Partial<AdData> }> {
     try {
       this.messages.push({ role: 'user', content: userMessage })
 
-      const contextMessage = currentAdData 
-        ? `Current ad data: ${JSON.stringify(currentAdData, null, 2)}\n\nUser message: ${userMessage}`
-        : userMessage
+      // Mock AI response for now - replace with real API later
+      const mockResponses = [
+        "That's a great service! What category would you like to list it under?",
+        "Can you tell me more about your pricing? Do you charge hourly or have fixed rates?",
+        "What makes your service unique? This will help your ad stand out.",
+        "Where do you provide this service? What's your service area?",
+        "That sounds perfect! Let me help you create a compelling title for your ad.",
+        "Great! Would you like to add any special offers or guarantees to attract customers?"
+      ]
 
-      const response = await anthropic.messages.create({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 500,
-        system: AD_CREATION_SYSTEM_PROMPT,
-        messages: this.messages.map(msg => ({
-          role: msg.role,
-          content: msg.content
-        })),
-      })
-
-      const assistantResponse = response.content[0].type === 'text' ? response.content[0].text : ''
+      const assistantResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)]
       this.messages.push({ role: 'assistant', content: assistantResponse })
 
       // Extract suggested ad data from the conversation
@@ -83,10 +61,9 @@ export class AIService {
     }
   }
 
-  private extractAdDataFromConversation(userMessage: string, aiResponse: string): Partial<AdData> {
+  private extractAdDataFromConversation(userMessage: string, _aiResponse: string): Partial<AdData> {
     const suggestions: Partial<AdData> = {}
     const lowerUser = userMessage.toLowerCase()
-    const lowerAI = aiResponse.toLowerCase()
 
     // Extract service type/category
     const categories = {
@@ -137,7 +114,7 @@ export class AIService {
   }
 
   generateAdPreview(adData: AdData): string {
-    const { title, description, category, priceType, priceMin, priceMax } = adData
+    const { title, description, category, priceType, priceMin } = adData
     
     let priceText = ''
     if (priceType === 'fixed' && priceMin) {

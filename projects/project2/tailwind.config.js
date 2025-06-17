@@ -9,6 +9,8 @@ export default {
       colors: {
         primary: {
           50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
           500: '#3b82f6',
           600: '#2563eb',
           700: '#1d4ed8',
@@ -28,5 +30,28 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      addUtilities({
+        '.line-clamp-1': {
+          overflow: 'hidden',
+          display: '-webkit-box',
+          '-webkit-box-orient': 'vertical',
+          '-webkit-line-clamp': '1',
+        },
+        '.line-clamp-2': {
+          overflow: 'hidden',
+          display: '-webkit-box',
+          '-webkit-box-orient': 'vertical',
+          '-webkit-line-clamp': '2',
+        },
+        '.line-clamp-3': {
+          overflow: 'hidden',
+          display: '-webkit-box',
+          '-webkit-box-orient': 'vertical',
+          '-webkit-line-clamp': '3',
+        },
+      })
+    }
+  ],
 }

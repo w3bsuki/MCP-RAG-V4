@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth'
-import { Bot, Search, MessageCircle, Star, ArrowRight, CheckCircle } from 'lucide-react'
+import { Bot, Search, MessageCircle, ArrowRight } from 'lucide-react'
 
 export default function Home() {
   const { user } = useAuthStore()

@@ -4,14 +4,13 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth'
 import { 
   Star, 
-  MapPin, 
-  Clock, 
   DollarSign, 
   MessageCircle, 
   User,
   Calendar,
   Tag,
-  ArrowLeft
+  ArrowLeft,
+  Eye
 } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import type { ServiceAd, Profile, Review } from '@/types/supabase'

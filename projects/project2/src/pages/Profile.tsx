@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth'
-import { User, Mail, Phone, MapPin, Edit, Save, X } from 'lucide-react'
+import { User, Mail, Phone, Edit, Save, X } from 'lucide-react'
 import LoadingSpinner from '@/components/LoadingSpinner'
 
 export default function Profile() {

@@ -18,7 +18,7 @@ const app: Express = express();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://your-frontend.vercel.app',
+  origin: process.env.CORS_ORIGIN || ['https://dash-front-one.vercel.app', 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true
 }));
 app.use(express.json());
@@ -55,7 +55,19 @@ let commandProcessor: CommandProcessor | null = null;
 async function initializeServices() {
   if (!monitoringService) {
     console.log('🔧 Initializing monitoring service...');
-    monitoringService = new MonitoringService();
+    
+    // Create a minimal config for serverless deployment
+    const config = {
+      agentWorktreesPath: process.env.AGENT_WORKTREES_PATH || '/tmp',
+      pollIntervalMs: parseInt(process.env.POLL_INTERVAL_MS || '5000'),
+      agents: [
+        { id: 'architect', name: 'Architect Agent', worktreePath: '/tmp/architect' },
+        { id: 'builder', name: 'Builder Agent', worktreePath: '/tmp/builder' },
+        { id: 'validator', name: 'Validator Agent', worktreePath: '/tmp/validator' }
+      ]
+    };
+    
+    monitoringService = new MonitoringService(config);
     
     // For serverless, we'll use a simplified setup without file monitoring
     console.log('✓ Monitoring service initialized (serverless mode)');
