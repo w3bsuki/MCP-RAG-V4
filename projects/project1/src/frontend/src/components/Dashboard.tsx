@@ -34,27 +34,30 @@ export const Dashboard: React.FC = () => {
         setMetrics([
           {
             agentId: 'architect',
-            status: 'active',
-            lastActivity: new Date().toISOString(),
-            commitCount: 12,
-            tasksCompleted: 4,
-            currentTask: 'Planning ServiceBot architecture'
+            totalFiles: 12,
+            totalCommits: 12,
+            lastActivity: new Date(),
+            filesChanged: 8,
+            linesAdded: 250,
+            linesRemoved: 50
           },
           {
-            agentId: 'builder', 
-            status: 'active',
-            lastActivity: new Date().toISOString(),
-            commitCount: 28,
-            tasksCompleted: 8,
-            currentTask: 'Implementing user authentication'
+            agentId: 'builder',
+            totalFiles: 45,
+            totalCommits: 28,
+            lastActivity: new Date(),
+            filesChanged: 32,
+            linesAdded: 1200,
+            linesRemoved: 300
           },
           {
             agentId: 'validator',
-            status: 'active', 
-            lastActivity: new Date().toISOString(),
-            commitCount: 15,
-            tasksCompleted: 6,
-            currentTask: 'Writing comprehensive tests'
+            totalFiles: 20,
+            totalCommits: 15,
+            lastActivity: new Date(),
+            filesChanged: 18,
+            linesAdded: 800,
+            linesRemoved: 100
           }
         ]);
         setError('Using demo data - backend not connected');

@@ -6,12 +6,14 @@
 - **Project1**: ZERO tests written (complete failure)
 - **Project2**: Only 15% test coverage (claimed 92% falsely)
 - **Validator**: Didn't validate anything, just rubber-stamped
+- **ALL PROJECTS**: NO PROPER TECH STACK INITIALIZATION
 
 ### What We're Changing
-1. **Test-First Development ENFORCED**
-2. **Real-time test monitoring**
-3. **Automatic rejection of untested code**
-4. **Validator has VETO power**
+1. **TECH STACK INITIALIZATION FIRST - ALWAYS**
+2. **Test-First Development ENFORCED**
+3. **Real-time test monitoring**
+4. **Automatic rejection of untested code**
+5. **Validator has VETO power**
 
 ## 📋 Agent-Specific Rules
 
@@ -36,7 +38,12 @@ forbidden:
 ### BUILDER AGENT
 ```yaml
 workflow:
-  1. Read test specifications first
+  0. INITIALIZE PROJECT FIRST (NON-NEGOTIABLE):
+     - npx create-next-app@latest . --typescript --tailwind --app
+     - npm install
+     - Create ALL directories: app/, components/, lib/
+     - npm run dev (MUST WORK before proceeding)
+  1. THEN read test specifications
   2. Write failing test
   3. Run test (confirm it fails)
   4. Write minimal code to pass
@@ -46,7 +53,8 @@ workflow:
   8. Only commit if >95% coverage
   
 forbidden:
-  - Writing code before tests
+  - Writing tests before project exists
+  - Skipping project initialization
   - Committing without test coverage
   - Marking tasks complete without tests
   - "I'll add tests later" - NO!
@@ -77,6 +85,31 @@ reports:
   - validation/COVERAGE_TREND.md
   - validation/BLOCKED_COMMITS.md
 ```
+
+## 🚨 MANDATORY FIRST STEP: PROJECT INITIALIZATION
+
+### BEFORE WRITING ANY TESTS, BUILDER MUST:
+```bash
+# 1. Initialize Next.js (REQUIRED)
+npx create-next-app@latest . --typescript --tailwind --app --src-dir
+
+# 2. Install dependencies (REQUIRED)
+npm install
+
+# 3. Verify it runs (REQUIRED)
+npm run dev
+# MUST see "Ready on http://localhost:3000"
+
+# 4. Create directory structure (REQUIRED)
+mkdir -p src/{components,lib,types}
+mkdir -p src/app/{api,dashboard,predictions,alerts}
+
+# 5. Install test dependencies (REQUIRED)
+npm install --save-dev jest @testing-library/react @testing-library/jest-dom
+npm install --save-dev @types/jest jest-environment-jsdom
+```
+
+### ONLY AFTER ALL ABOVE STEPS ARE COMPLETE, THEN:
 
 ## 🏗️ Project Structure with Tests
 

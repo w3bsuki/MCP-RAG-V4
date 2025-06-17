@@ -1,5 +1,11 @@
 # Project: Agent Monitoring Dashboard
 
+## 🎯 Development Order: FRONTEND FIRST!
+1. **Build UI/UX Foundation FIRST** - Complete frontend before backend
+2. **Mock Data for Development** - Use fake data until backend ready
+3. **Deploy Frontend Early** - Get user feedback on UI
+4. **Then Build Backend** - With clear API requirements from frontend
+
 ## Current Project Context
 You are working on PROJECT-001: A real-time monitoring dashboard for the MCP/RAG Multi-Agent System.
 
