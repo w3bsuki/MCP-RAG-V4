@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "lastUpdated": "2024-06-17T00:00:00Z",
+  "metadata": {
+    "totalTasks": 0,
+    "completedTasks": 0,
+    "activeTasks": 0,
+    "blockedTasks": 0
+  },
+  "tasks": [],
+  "taskTemplates": {
+    "design": {
+      "prefix": "DESIGN",
+      "defaultAssignee": "architect",
+      "requiredFields": ["specifications", "api_contracts", "data_models"],
+      "workflow": ["draft", "review", "approved", "handed_off"]
+    },
+    "implementation": {
+      "prefix": "IMPL",
+      "defaultAssignee": "builder",
+      "requiredFields": ["design_ref", "test_plan", "acceptance_criteria"],
+      "workflow": ["assigned", "in_progress", "testing", "completed"]
+    },
+    "validation": {
+      "prefix": "VAL",
+      "defaultAssignee": "validator",
+      "requiredFields": ["test_scope", "quality_gates", "report_format"],
+      "workflow": ["queued", "testing", "analyzing", "approved", "rejected"]
+    }
+  },
+  "priorities": {
+    "critical": {
+      "sla_hours": 4,
+      "color": "#FF0000",
+      "escalation": true
+    },
+    "high": {
+      "sla_hours": 24,
+      "color": "#FFA500",
+      "escalation": false
+    },
+    "medium": {
+      "sla_hours": 72,
+      "color": "#FFFF00",
+      "escalation": false
+    },
+    "low": {
+      "sla_hours": 168,
+      "color": "#00FF00",
+      "escalation": false
+    }
+  },
+  "statusDefinitions": {
+    "TODO": "Task created but not started",
+    "IN_PROGRESS": "Actively being worked on",
+    "BLOCKED": "Cannot proceed due to dependency or issue",
+    "IN_REVIEW": "Work completed, awaiting review",
+    "COMPLETED": "All acceptance criteria met",
+    "CANCELLED": "Task no longer needed"
+  }
+}

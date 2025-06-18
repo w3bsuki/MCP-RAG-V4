@@ -1,9 +1,13 @@
 {
   "mcpServers": {
-    "filesystem": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-filesystem", "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env"],
-      "description": "Official filesystem server with path whitelisting"
+    "filesystem-secure": {
+      "command": "python",
+      "args": ["/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/mcp-servers/security-wrapper/filesystem-secure.py"],
+      "env": {
+        "SECURITY_CONFIG": "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/mcp-servers/security-wrapper/security-config.json",
+        "AUDIT_LOG": "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/logs/filesystem-audit.log"
+      },
+      "description": "Secure filesystem server with path whitelisting and confirmations"
     },
     "puppeteer": {
       "command": "npx",
@@ -18,7 +22,20 @@
     "github": {
       "command": "npx",
       "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_HERE"
+      },
       "description": "GitHub API integration"
+    },
+    "git": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-git", "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/git-worktrees"],
+      "description": "Git version control operations"
+    },
+    "sqlite": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-sqlite"],
+      "description": "SQLite database operations"
     },
     "knowledge-base": {
       "command": "python",
@@ -33,9 +50,19 @@
       "args": ["/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/mcp-servers/vector-search-python/server.py"],
       "env": {
         "QDRANT_URL": "http://localhost:6333",
-        "COLLECTION_NAME": "mcp_knowledge"
+        "REDIS_URL": "redis://localhost:6379",
+        "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
+        "CACHE_TTL": "3600"
       },
-      "description": "Semantic search with Qdrant"
+      "description": "Semantic search with Qdrant and Redis caching"
+    },
+    "coordination-hub": {
+      "command": "python",
+      "args": ["/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/mcp-servers/coordination-hub/server.py"],
+      "env": {
+        "SHARED_DIR": "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/shared"
+      },
+      "description": "Inter-agent coordination and task management"
     }
   }
 }

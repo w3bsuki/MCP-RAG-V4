@@ -1,0 +1,46 @@
+{
+  "whitelist_paths": [
+    "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/git-worktrees",
+    "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/shared",
+    "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/rag-system/knowledge"
+  ],
+  "blacklist_paths": [
+    "/etc",
+    "/usr",
+    "/bin",
+    "/sbin",
+    "/root",
+    "/home/w3bsuki/.ssh",
+    "/home/w3bsuki/.aws",
+    "/home/w3bsuki/.config",
+    "/home/w3bsuki/.gnupg"
+  ],
+  "require_confirmation": [
+    "delete",
+    "move",
+    "chmod",
+    "chown",
+    "write"
+  ],
+  "max_file_size_mb": 100,
+  "allowed_extensions": null,
+  "blocked_extensions": [
+    ".exe",
+    ".dll",
+    ".so",
+    ".dylib",
+    ".sh",
+    ".bat",
+    ".cmd"
+  ],
+  "enable_audit": true,
+  "api_keys": {
+    "architect": "dev-key-architect-2024",
+    "builder": "dev-key-builder-2024",
+    "validator": "dev-key-validator-2024"
+  },
+  "rate_limits": {
+    "requests_per_minute": 100,
+    "requests_per_hour": 1000
+  }
+}

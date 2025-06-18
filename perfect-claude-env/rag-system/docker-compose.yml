@@ -3,23 +3,54 @@ version: '3.8'
 services:
   qdrant:
     image: qdrant/qdrant:latest
+    container_name: mcp-rag-qdrant
     ports:
       - "6333:6333"
       - "6334:6334"
     volumes:
-      - ./vector-db/qdrant_storage:/qdrant/storage
+      - ./vector-db/qdrant_storage:/qdrant/storage:z
     environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
       - QDRANT__LOG_LEVEL=INFO
+      - QDRANT__TELEMETRY_DISABLED=true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for caching embeddings
+  redis:
+    image: redis:7-alpine
+    container_name: mcp-rag-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./vector-db/redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring with Prometheus (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mcp-rag-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
     restart: unless-stopped
 
-  # Alternative: Chroma
-  # chroma:
-  #   image: chromadb/chroma:latest
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - ./vector-db/chroma_storage:/chroma/chroma
-  #   environment:
-  #     - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider
-  #     - CHROMA_SERVER_AUTH_CREDENTIALS=test-token
-  #   restart: unless-stopped
+networks:
+  default:
+    name: mcp-rag-network

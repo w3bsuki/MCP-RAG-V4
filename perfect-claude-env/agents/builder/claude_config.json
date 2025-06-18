@@ -1,35 +1,105 @@
 {
   "agent": "builder",
-  "role": "Implementation Specialist",
+  "role": "Implementation Specialist & Code Developer",
+  "version": "2.0.0",
   "capabilities": [
-    "Implement code from specifications",
-    "Run tests and validate code",
-    "Manage dependencies",
-    "Create build configurations"
+    "Implement architectural designs",
+    "Write production-quality code",
+    "Create unit and integration tests",
+    "Refactor existing code",
+    "Integrate APIs and services",
+    "Setup development environments"
   ],
-  "mcp_servers": [
-    "filesystem",
-    "testing-tools",
-    "git-operations",
-    "knowledge-base",
-    "hub"
-  ],
+  "mcp_servers": {
+    "filesystem": {
+      "enabled": true,
+      "permissions": ["read", "write", "execute"],
+      "whitelist_paths": [
+        "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/git-worktrees/builder-branch",
+        "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/shared",
+        "/home/w3bsuki/MCP-RAG-V4/projects"
+      ]
+    },
+    "knowledge-base": {
+      "enabled": true,
+      "permissions": ["store", "search", "extract"],
+      "categories": ["implementation", "code-examples", "best-practices", "libraries"]
+    },
+    "vector-search": {
+      "enabled": true,
+      "permissions": ["search", "index"],
+      "collections": ["code-snippets", "implementations", "solutions"]
+    },
+    "github": {
+      "enabled": true,
+      "permissions": ["read_issues", "create_prs", "read_prs", "comment"],
+      "restricted": ["merge", "delete", "admin"]
+    },
+    "testing-tools": {
+      "enabled": true,
+      "permissions": ["run_tests", "create_tests", "coverage_reports"],
+      "frameworks": ["jest", "pytest", "mocha", "vitest"]
+    },
+    "package-manager": {
+      "enabled": true,
+      "permissions": ["install", "update", "audit"],
+      "managers": ["npm", "yarn", "pip", "cargo"]
+    },
+    "linting-tools": {
+      "enabled": true,
+      "permissions": ["lint", "format", "fix"],
+      "tools": ["eslint", "prettier", "black", "rustfmt"]
+    }
+  },
   "restricted_operations": [
-    "architectural_decisions",
-    "deployment_to_production"
+    "production_deployment",
+    "database_schema_changes",
+    "security_critical_modifications",
+    "delete_production_data",
+    "modify_ci_cd_pipeline"
   ],
   "memory_config": {
-    "type": "local",
+    "type": "persistent",
     "path": "./memory",
-    "retention_days": 30
+    "retention_days": 60,
+    "max_entries": 20000,
+    "index_strategy": "hybrid",
+    "cache_implementation_patterns": true
   },
   "tools_config": {
     "custom_tools_path": "./tools",
     "allowed_tools": [
       "implement_feature",
-      "run_tests",
-      "build_project",
-      "manage_dependencies"
-    ]
+      "refactor_code",
+      "create_test",
+      "setup_environment",
+      "integrate_service",
+      "optimize_performance",
+      "debug_issue",
+      "generate_documentation"
+    ],
+    "tool_timeout_ms": 60000,
+    "parallel_execution": true
+  },
+  "coordination_config": {
+    "task_file": "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/shared/planning/ACTIVE_TASKS.json",
+    "communication_dir": "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/shared/communication",
+    "status_update_interval": 180,
+    "code_review_required": true,
+    "artifact_storage": "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/shared/artifacts"
+  },
+  "development_config": {
+    "default_branch": "builder-branch",
+    "commit_style": "conventional",
+    "test_before_commit": true,
+    "auto_format": true,
+    "dependency_check": true
+  },
+  "security_config": {
+    "require_confirmation": ["delete", "modify_shared", "install_packages"],
+    "audit_log": true,
+    "max_file_size_mb": 200,
+    "scan_dependencies": true,
+    "prevent_secrets_commit": true
   }
 }
