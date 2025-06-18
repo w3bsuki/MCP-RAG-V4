@@ -6,419 +6,213 @@ Handles markdown docs, patterns, and knowledge retrieval
 import json
 import os
 import asyncio
-import threading
-import time
 from pathlib import Path
 from typing import Dict, List, Any
-import hashlib
 from datetime import datetime
 
-from mcp import Server
-from mcp.types import Tool, Resource, TextContent, ErrorData
+from mcp.server import Server
+from mcp.types import Tool, TextContent
 import mcp.server.stdio
-
-# Import security and logging modules
-import sys
-sys.path.append('../')
-from validation_schemas import (
-    StoreKnowledgeRequest, SearchKnowledgeRequest, validate_input,
-    TOOL_SCHEMAS
-)
-from logging_config import setup_logging, log_async_errors
-
-# Prometheus metrics
-from prometheus_client import Counter, Histogram, Gauge, start_http_server, CollectorRegistry, generate_latest
-from fastapi import FastAPI
-from fastapi.responses import Response
-import uvicorn
-
-# Initialize metrics
-registry = CollectorRegistry()
-tool_calls_total = Counter('mcp_tool_calls_total', 'Total MCP tool calls', ['tool_name', 'status'], registry=registry)
-tool_call_duration = Histogram('mcp_tool_call_duration_seconds', 'MCP tool call duration', ['tool_name'], registry=registry)
-server_uptime = Gauge('mcp_server_uptime_seconds', 'Server uptime in seconds', registry=registry)
-knowledge_items_total = Gauge('mcp_knowledge_items_total', 'Total knowledge items stored', registry=registry)
-
-start_time = time.time()
-
-# Metrics HTTP server
-app = FastAPI()
-
-@app.get("/metrics")
-async def metrics():
-    server_uptime.set(time.time() - start_time)
-    return Response(generate_latest(registry), media_type="text/plain")
-
-@app.get("/health")
-async def health():
-    return {
-        "status": "healthy",
-        "server": "knowledge-base-server",
-        "uptime": time.time() - start_time,
-        "timestamp": datetime.now().isoformat()
-    }
-
-def start_metrics_server():
-    metrics_port = int(os.environ.get("PYTHON_METRICS_PORT", "9200"))
-    uvicorn.run(app, host="0.0.0.0", port=metrics_port, log_level="warning")
-
-# Start metrics server in background thread
-metrics_thread = threading.Thread(target=start_metrics_server, daemon=True)
-metrics_thread.start()
-
-# Initialize logging
-loggers = setup_logging("knowledge-base", "INFO")
-main_logger = loggers['main']
-security_logger = loggers['security']
-performance_logger = loggers['performance']
 
 # Initialize server
 server = Server("knowledge-base")
-KNOWLEDGE_ROOT = Path(os.environ.get("KNOWLEDGE_ROOT", "./knowledge"))
 
-main_logger.info("Knowledge Base MCP Server starting", extra={'component': 'startup'})
+# Knowledge storage
+KNOWLEDGE_ROOT = Path(os.environ.get("KNOWLEDGE_ROOT", "./knowledge"))
+KNOWLEDGE_ROOT.mkdir(exist_ok=True)
+
+# Simple JSON database
+KNOWLEDGE_DB = KNOWLEDGE_ROOT / "knowledge.json"
+
+def load_knowledge() -> List[Dict[str, Any]]:
+    """Load knowledge from JSON file"""
+    if not KNOWLEDGE_DB.exists():
+        return []
+    
+    try:
+        with open(KNOWLEDGE_DB, 'r') as f:
+            data = json.load(f)
+        return data.get("items", [])
+    except:
+        return []
+
+def save_knowledge(items: List[Dict[str, Any]]):
+    """Save knowledge to JSON file"""
+    try:
+        with open(KNOWLEDGE_DB, 'w') as f:
+            json.dump({"items": items}, f, indent=2)
+    except Exception as e:
+        print(f"Error saving knowledge: {e}")
 
 @server.list_tools()
 async def list_tools() -> List[Tool]:
+    """List available tools"""
     return [
         Tool(
             name="store_knowledge",
-            description="Store a knowledge item with tags and metadata",
+            description="Store a knowledge item with content and metadata",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "title": {"type": "string"},
-                    "content": {"type": "string"},
-                    "category": {"type": "string", "enum": ["pattern", "learning", "reference", "solution"]},
-                    "tags": {"type": "array", "items": {"type": "string"}},
-                    "source": {"type": "string"},
-                    "agent": {"type": "string"},
-                    "api_key": {"type": "string"}
+                    "content": {
+                        "type": "string",
+                        "description": "The knowledge content to store"
+                    },
+                    "title": {
+                        "type": "string", 
+                        "description": "Title for the knowledge item"
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Tags for categorization"
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": ["pattern", "learning", "reference", "solution"],
+                        "description": "Knowledge category"
+                    }
                 },
-                "required": ["title", "content", "category", "tags", "agent"]
+                "required": ["content"]
             }
         ),
         Tool(
             name="search_knowledge",
-            description="Search knowledge base by query and filters",
+            description="Search the knowledge base for relevant information",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string"},
-                    "category": {"type": "string", "enum": ["pattern", "learning", "reference", "solution"]},
-                    "tags": {"type": "array", "items": {"type": "string"}},
-                    "limit": {"type": "integer", "default": 10},
-                    "agent": {"type": "string"},
-                    "api_key": {"type": "string"}
+                    "query": {
+                        "type": "string",
+                        "description": "Search query"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of results",
+                        "default": 10
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": ["pattern", "learning", "reference", "solution"],
+                        "description": "Filter by category"
+                    }
                 },
-                "required": ["query", "agent"]
+                "required": ["query"]
             }
         ),
         Tool(
-            name="get_knowledge",
-            description="Get a specific knowledge item by ID",
+            name="list_knowledge",
+            description="List all knowledge items",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "id": {"type": "string"}
-                },
-                "required": ["id"]
-            }
-        ),
-        Tool(
-            name="extract_patterns",
-            description="Extract patterns from code or documentation",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "content": {"type": "string"},
-                    "language": {"type": "string"},
-                    "min_frequency": {"type": "integer", "default": 2}
-                },
-                "required": ["content"]
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of items",
+                        "default": 20
+                    }
+                }
             }
         )
     ]
 
-# Metrics decorator for tool calls
-def with_metrics(tool_name):
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
-            start_time = time.time()
-            try:
-                result = await func(*args, **kwargs)
-                duration = time.time() - start_time
-                tool_calls_total.labels(tool_name=tool_name, status='success').inc()
-                tool_call_duration.labels(tool_name=tool_name).observe(duration)
-                return result
-            except Exception as e:
-                duration = time.time() - start_time
-                tool_calls_total.labels(tool_name=tool_name, status='error').inc()
-                tool_call_duration.labels(tool_name=tool_name).observe(duration)
-                raise e
-        return wrapper
-    return decorator
-
 @server.call_tool()
 async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
-    # Validate input if schema exists
-    if name in TOOL_SCHEMAS:
-        try:
-            validated_args = validate_input(TOOL_SCHEMAS[name], arguments)
-            arguments = validated_args.dict()
-            main_logger.info(f"Input validation passed for {name}", extra={'tool_name': name})
-        except ValueError as e:
-            security_logger.log_security_violation(
-                agent=arguments.get('agent', 'unknown'),
-                violation_type='invalid_input',
-                details={'tool': name, 'error': str(e), 'args': arguments}
-            )
-            return [TextContent(type="text", text=json.dumps({"error": f"Validation failed: {str(e)}"}))]
+    """Handle tool calls"""
     
-    # Wrap with metrics
-    @with_metrics(name)
-    async def handle_tool_call():
-        try:
-            if name == "store_knowledge":
-                return await store_knowledge(arguments)
-            elif name == "search_knowledge":
-                return await search_knowledge(arguments)
-            elif name == "get_knowledge":
-                return await get_knowledge(arguments)
-            elif name == "extract_patterns":
-                return await extract_patterns(arguments)
-            else:
-                raise ValueError(f"Unknown tool: {name}")
-        except Exception as e:
-            main_logger.error(f"Tool execution failed: {name}", extra={'tool_name': name, 'error': str(e)}, exc_info=True)
-            return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
-    
-    # Execute the wrapped function
-    return await handle_tool_call()
-
-@log_async_errors(main_logger)
-async def store_knowledge(args: Dict[str, Any]) -> List[TextContent]:
-    """Store a knowledge item"""
-    category_dir = KNOWLEDGE_ROOT / args["category"]
-    category_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Generate ID
-    content_hash = hashlib.sha256(args["content"].encode()).hexdigest()[:8]
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    item_id = f"{args['category']}_{timestamp}_{content_hash}"
-    
-    # Create knowledge item
-    knowledge_item = {
-        "id": item_id,
-        "title": args["title"],
-        "content": args["content"],
-        "category": args["category"],
-        "tags": args["tags"],
-        "source": args.get("source", "unknown"),
-        "created_at": datetime.now().isoformat(),
-        "metadata": {
-            "word_count": len(args["content"].split()),
-            "char_count": len(args["content"]),
-            "hash": content_hash
+    if name == "store_knowledge":
+        content = arguments.get("content", "")
+        title = arguments.get("title", f"Knowledge Item {len(load_knowledge()) + 1}")
+        tags = arguments.get("tags", [])
+        category = arguments.get("category", "reference")
+        
+        # Create new knowledge item
+        new_item = {
+            "id": len(load_knowledge()) + 1,
+            "title": title,
+            "content": content,
+            "tags": tags,
+            "category": category,
+            "created_at": datetime.now().isoformat()
         }
-    }
+        
+        # Store it
+        items = load_knowledge()
+        items.append(new_item)
+        save_knowledge(items)
+        
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "status": "success",
+                "message": "Knowledge stored successfully",
+                "item": new_item
+            }, indent=2)
+        )]
     
-    # Save as JSON and Markdown
-    json_path = category_dir / f"{item_id}.json"
-    md_path = category_dir / f"{item_id}.md"
-    
-    json_path.write_text(json.dumps(knowledge_item, indent=2))
-    
-    # Log successful storage
-    security_logger.log_access(
-        agent=args.get('agent', 'unknown'),
-        tool_name='store_knowledge',
-        args={'title': args['title'], 'category': args['category']},
-        result='success'
-    )
-    
-    # Update metrics
-    knowledge_items_total.inc()
-    main_logger.info(f"Knowledge item stored: {item_id}", extra={'item_id': item_id, 'category': args['category']})
-    
-    # Create markdown version
-    md_content = f"""# {args['title']}
-
-**Category:** {args['category']}
-**Tags:** {', '.join(args['tags'])}
-**Source:** {args.get('source', 'unknown')}
-**Created:** {knowledge_item['created_at']}
-
-## Content
-
-{args['content']}
-
----
-*ID: {item_id}*
-"""
-    md_path.write_text(md_content)
-    
-    return [TextContent(type="text", text=json.dumps({
-        "success": True,
-        "id": item_id,
-        "path": str(json_path)
-    }))]
-
-@log_async_errors(main_logger)
-async def search_knowledge(args: Dict[str, Any]) -> List[TextContent]:
-    """Search knowledge base"""
-    results = []
-    query = args["query"].lower()
-    category_filter = args.get("category")
-    tag_filter = set(args.get("tags", []))
-    limit = args.get("limit", 10)
-    
-    # Search through all categories or specific one
-    search_dirs = [KNOWLEDGE_ROOT / category_filter] if category_filter else KNOWLEDGE_ROOT.glob("*/")
-    
-    for category_dir in search_dirs:
-        if not category_dir.is_dir():
-            continue
-            
-        for json_file in category_dir.glob("*.json"):
-            try:
-                item = json.loads(json_file.read_text())
-                
-                # Check query match
-                if query not in item["title"].lower() and query not in item["content"].lower():
-                    continue
-                
-                # Check tag filter
-                if tag_filter and not tag_filter.intersection(set(item["tags"])):
-                    continue
-                
-                # Calculate relevance score
-                title_matches = item["title"].lower().count(query)
-                content_matches = item["content"].lower().count(query)
-                score = (title_matches * 3) + content_matches
-                
-                results.append({
-                    "id": item["id"],
-                    "title": item["title"],
-                    "category": item["category"],
-                    "tags": item["tags"],
-                    "score": score,
-                    "preview": item["content"][:200] + "..." if len(item["content"]) > 200 else item["content"]
-                })
-            except Exception:
+    elif name == "search_knowledge":
+        query = arguments.get("query", "").lower()
+        limit = arguments.get("limit", 10)
+        category_filter = arguments.get("category")
+        
+        # Load knowledge
+        items = load_knowledge()
+        
+        # Filter and search
+        results = []
+        for item in items:
+            # Category filter
+            if category_filter and item.get("category") != category_filter:
                 continue
+            
+            # Text search
+            content = item.get("content", "").lower()
+            title = item.get("title", "").lower()
+            tags = " ".join(item.get("tags", [])).lower()
+            
+            if query in content or query in title or query in tags:
+                results.append(item)
+                if len(results) >= limit:
+                    break
+        
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "results": results,
+                "total": len(results),
+                "query": query
+            }, indent=2)
+        )]
     
-    # Sort by score and limit
-    results.sort(key=lambda x: x["score"], reverse=True)
-    results = results[:limit]
+    elif name == "list_knowledge":
+        limit = arguments.get("limit", 20)
+        items = load_knowledge()
+        
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "items": items[:limit],
+                "total": len(items)
+            }, indent=2)
+        )]
     
-    # Log search operation
-    security_logger.log_access(
-        agent=args.get('agent', 'unknown'),
-        tool_name='search_knowledge',
-        args={'query': args['query'], 'category': category_filter},
-        result=f'found_{len(results)}_items'
-    )
-    
-    main_logger.info(f"Knowledge search completed", extra={'query': args['query'], 'results_count': len(results)})
-    
-    return [TextContent(type="text", text=json.dumps({
-        "query": args["query"],
-        "count": len(results),
-        "results": results
-    }, indent=2))]
-
-@log_async_errors(main_logger)
-async def get_knowledge(args: Dict[str, Any]) -> List[TextContent]:
-    """Get specific knowledge item"""
-    item_id = args["id"]
-    
-    # Search all categories
-    for category_dir in KNOWLEDGE_ROOT.glob("*/"):
-        json_path = category_dir / f"{item_id}.json"
-        if json_path.exists():
-            item = json.loads(json_path.read_text())
-            return [TextContent(type="text", text=json.dumps(item, indent=2))]
-    
-    return [TextContent(type="text", text=json.dumps({
-        "error": f"Knowledge item {item_id} not found"
-    }))]
-
-@log_async_errors(main_logger)
-async def extract_patterns(args: Dict[str, Any]) -> List[TextContent]:
-    """Extract patterns from content"""
-    content = args["content"]
-    language = args.get("language", "unknown")
-    min_frequency = args.get("min_frequency", 2)
-    
-    patterns = []
-    
-    # Simple pattern extraction (can be enhanced with AST parsing)
-    lines = content.split("\n")
-    
-    # Extract imports/includes
-    import_patterns = {}
-    for line in lines:
-        if "import" in line or "require" in line or "#include" in line:
-            import_patterns[line.strip()] = import_patterns.get(line.strip(), 0) + 1
-    
-    # Extract function definitions
-    function_patterns = {}
-    for line in lines:
-        if "function" in line or "def " in line or "func " in line:
-            function_patterns[line.strip()] = function_patterns.get(line.strip(), 0) + 1
-    
-    # Extract common code blocks (simplified)
-    code_blocks = {}
-    for i in range(len(lines) - 2):
-        block = "\n".join(lines[i:i+3])
-        if len(block.strip()) > 20:  # Meaningful blocks only
-            code_blocks[block] = code_blocks.get(block, 0) + 1
-    
-    # Filter by frequency
-    for pattern_type, pattern_dict in [
-        ("import", import_patterns),
-        ("function", function_patterns),
-        ("code_block", code_blocks)
-    ]:
-        for pattern, count in pattern_dict.items():
-            if count >= min_frequency:
-                patterns.append({
-                    "type": pattern_type,
-                    "pattern": pattern,
-                    "frequency": count,
-                    "language": language
-                })
-    
-    return [TextContent(type="text", text=json.dumps({
-        "language": language,
-        "total_patterns": len(patterns),
-        "patterns": sorted(patterns, key=lambda x: x["frequency"], reverse=True)
-    }, indent=2))]
-
-@server.list_resources()
-async def list_resources() -> List[Resource]:
-    """List available knowledge categories"""
-    resources = []
-    
-    for category_dir in KNOWLEDGE_ROOT.glob("*/"):
-        if category_dir.is_dir():
-            count = len(list(category_dir.glob("*.json")))
-            resources.append(Resource(
-                uri=f"knowledge://{category_dir.name}",
-                name=f"{category_dir.name.title()} Knowledge",
-                description=f"{count} items in {category_dir.name} category",
-                mimeType="application/json"
-            ))
-    
-    return resources
+    else:
+        return [TextContent(
+            type="text",
+            text=f"Unknown tool: {name}"
+        )]
 
 async def main():
     """Run the server"""
-    KNOWLEDGE_ROOT.mkdir(parents=True, exist_ok=True)
+    print(f"Starting Knowledge Base MCP Server...")
+    print(f"Knowledge root: {KNOWLEDGE_ROOT}")
+    
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        await server.run(read_stream, write_stream)
+        await server.run(
+            read_stream,
+            write_stream,
+            {}
+        )
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

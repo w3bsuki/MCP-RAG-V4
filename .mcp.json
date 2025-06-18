@@ -2,79 +2,33 @@
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-filesystem", "--root", "./projects", "--root", "./shared"],
-      "description": "Secure filesystem operations with path whitelisting",
-      "allowedPaths": [
-        "./projects",
-        "./shared", 
-        "./.worktrees",
-        "./perfect-claude-env/shared"
-      ]
-    },
-    "vector-search": {
-      "command": "python",
-      "args": ["perfect-claude-env/mcp-servers/vector-search-python/server.py"],
-      "env": {
-        "QDRANT_URL": "http://localhost:6333",
-        "REDIS_URL": "redis://localhost:6379",
-        "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
-        "MCP_SERVER_PORT": "8081"
-      },
-      "description": "Semantic search with Qdrant and Redis caching"
+      "args": ["@modelcontextprotocol/server-filesystem", "/home/w3bsuki/MCP-RAG-V4"],
+      "description": "Secure filesystem operations"
     },
     "knowledge-base": {
-      "command": "python", 
-      "args": ["perfect-claude-env/mcp-servers/knowledge-base-python/server.py"],
+      "command": "/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python", 
+      "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/knowledge-base-python/server.py"],
       "env": {
-        "KNOWLEDGE_ROOT": "./perfect-claude-env/rag-system/knowledge",
-        "MCP_SERVER_PORT": "8080"
+        "KNOWLEDGE_ROOT": "/home/w3bsuki/MCP-RAG-V4/rag-system/knowledge"
       },
       "description": "Knowledge storage and pattern extraction"
     },
-    "git-ops": {
-      "command": "python",
-      "args": ["perfect-claude-env/mcp-servers/security-wrapper/filesystem-secure.py", "--confirm"],
+    "vector-search": {
+      "command": "/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python",
+      "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/vector-search-python/server.py"],
       "env": {
-        "SECURITY_CONFIG": "./perfect-claude-env/config/security-config.json",
-        "AUDIT_LOG": "./logs/git-audit.log",
-        "MCP_SERVER_PORT": "8082"
+        "QDRANT_URL": "http://localhost:6333",
+        "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2"
       },
-      "description": "Git operations with confirmation flags and audit logging"
-    },
-    "testing-tools": {
-      "command": "node",
-      "args": ["perfect-claude-env/mcp-servers/testing-tools/index.js"],
-      "env": {
-        "MCP_SERVER_PORT": "8086"
-      },
-      "description": "Testing, linting, security scanning, and validation tools"
+      "description": "Semantic search with Qdrant"
     },
     "coordination-hub": {
-      "command": "python",
-      "args": ["perfect-claude-env/mcp-servers/coordination-hub/server.py"],
+      "command": "/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python",
+      "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/coordination-hub/server.py"],
       "env": {
-        "SHARED_DIR": "./perfect-claude-env/shared",
-        "MCP_SERVER_PORT": "8087"
+        "SHARED_DIR": "/home/w3bsuki/MCP-RAG-V4/shared"
       },
       "description": "Inter-agent coordination and task management"
-    },
-    "puppeteer": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-puppeteer"],
-      "description": "Browser automation and screenshots for testing"
-    },
-    "fetch": {
-      "command": "npx", 
-      "args": ["@modelcontextprotocol/server-fetch"],
-      "description": "HTTP requests and API testing"
-    },
-    "github": {
-      "command": "npx",
-      "args": ["@modelcontextprotocol/server-github"],
-      "env": {
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
-      },
-      "description": "GitHub API integration for issues and PRs"
     }
   },
   "permissions": {
@@ -100,7 +54,7 @@
   },
   "agents": {
     "architect": {
-      "workingDir": "./.worktrees/architect-branch",
+      "workingDir": "./git-worktrees/architect",
       "allowedServers": [
         "filesystem",
         "vector-search", 
@@ -115,7 +69,7 @@
       ]
     },
     "builder": {
-      "workingDir": "./.worktrees/builder-branch",
+      "workingDir": "./git-worktrees/builder",
       "allowedServers": [
         "filesystem",
         "vector-search",
@@ -131,7 +85,7 @@
       ]
     },
     "validator": {
-      "workingDir": "./.worktrees/validator-branch", 
+      "workingDir": "./git-worktrees/validator", 
       "allowedServers": [
         "filesystem",
         "testing-tools",

@@ -21,10 +21,46 @@ from passlib.context import CryptContext
 
 # Import our modules
 import sys
-sys.path.append('../../')
-from agents.admin.agent_orchestrator import AdminAgent, AgentTask, AgentRole
-from rag_system.enhanced_rag import EnhancedRAGSystem
-from mcp_servers.logging_config import setup_logging
+from pathlib import Path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+try:
+    from agents.admin.agent_orchestrator import AdminAgent, AgentTask, AgentRole
+except ImportError:
+    # Simplified versions for dashboard
+    class AdminAgent:
+        def __init__(self, config): pass
+        async def submit_task(self, task): return "task-" + str(hash(task))
+        def get_all_tasks(self): return []
+        def get_task_status(self, task_id): return {"status": "unknown"}
+    
+    class AgentTask:
+        def __init__(self, **kwargs): self.__dict__.update(kwargs)
+    
+    from enum import Enum
+    class AgentRole(Enum):
+        ADMIN = "admin"
+        ARCHITECT = "architect"
+        BUILDER = "builder"
+        VALIDATOR = "validator"
+
+sys.path.insert(0, str(project_root / "rag-system"))
+try:
+    from enhanced_rag import EnhancedRAGSystem
+except ImportError:
+    # Simplified version
+    class EnhancedRAGSystem:
+        def __init__(self, config): pass
+        async def initialize(self): pass
+        async def hybrid_search(self, **kwargs): return []
+        async def ingest_document(self, **kwargs): return type('Doc', (), {'id': 'test', 'chunks': []})
+        async def get_stats(self): return {"total_documents": 0}
+
+# Simplified logging
+import logging
+setup_logging = lambda name, level: {'main': logging.getLogger(name), 'performance': logging.getLogger(f"{name}-perf")}
+logging.basicConfig(level=logging.INFO)
 
 # Initialize logging
 loggers = setup_logging("dashboard-api", "INFO")

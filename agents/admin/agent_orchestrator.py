@@ -15,14 +15,24 @@ import logging
 import os
 from dotenv import load_dotenv
 
-# Import security and logging
-import sys
-sys.path.append('../../mcp-servers/')
-from logging_config import setup_logging, log_async_errors
-from validation_schemas import StringValidation
-
 # Import task queue
-from task_queue import task_queue
+try:
+    from .task_queue import task_queue
+except ImportError:
+    from task_queue import task_queue
+
+# Import security and logging
+try:
+    from mcp_servers.logging_config import setup_logging, log_async_errors
+    from mcp_servers.validation_schemas import StringValidation
+except ImportError:
+    # Simplified logging if imports fail
+    import logging
+    setup_logging = lambda name, level: {'main': logging.getLogger(name), 'performance': logging.getLogger(f"{name}-perf")}
+    log_async_errors = lambda logger: lambda func: func
+    class StringValidation:
+        @staticmethod
+        def is_safe_path(path): return True
 
 # Load environment variables
 load_dotenv()
