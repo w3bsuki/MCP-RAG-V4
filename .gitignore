@@ -1,3 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Python Testing
+.tox/
+.nox/
+.coverage
+.pytest_cache/
+htmlcov/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
 # Node.js
 node_modules/
 npm-debug.log*
@@ -15,11 +64,14 @@ build/
 .mcp/rag-store/*.db
 .mcp/rag-store/*.idx
 .mcp/rag-store/temp/
+rag-system/vector-db/
+perfect-claude-env/rag-system/vector-db/
 
 # Environment
 .env
 .env.local
 .env.*.local
+config/secrets.json
 
 # IDE
 .vscode/
@@ -27,6 +79,9 @@ build/
 *.swp
 *.swo
 *~
+.spyderproject
+.spyproject
+.ropeproject
 
 # OS
 .DS_Store
@@ -35,10 +90,13 @@ Thumbs.db
 # Logs
 logs/
 *.log
+audit.log
+*.audit
 
 # Testing
 coverage/
 .nyc_output/
+.pytest_cache/
 
 # Temporary files
 *.tmp
@@ -49,6 +107,8 @@ coverage/
 agents/*/node_modules/
 agents/*/.env
 agents/*/dist/
+agents/*/venv/
+agents/*/__pycache__/
 
 # Coordination artifacts
 coordination/*.tmp
@@ -57,4 +117,19 @@ coordination/memory-bank/*.cache
 # Build artifacts
 *.pid
 *.seed
-*.pid.lock.worktrees/
+*.pid.lock
+
+# MCP Server specific
+perfect-claude-env/mcp-servers/*/venv/
+perfect-claude-env/mcp-servers/*/__pycache__/
+perfect-claude-env/mcp-servers/*/.env
+
+# Docker
+.dockerignore
+
+# Security
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx

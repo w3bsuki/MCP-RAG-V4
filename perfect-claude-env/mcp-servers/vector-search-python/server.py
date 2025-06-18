@@ -23,8 +23,90 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct, Filter, FieldCondition, MatchValue, SearchRequest, NamedVector
 from sentence_transformers import SentenceTransformer, CrossEncoder
 
+# Prometheus metrics and FastAPI for health/metrics endpoints
+from prometheus_client import Counter, Histogram, Gauge, CollectorRegistry, generate_latest
+from fastapi import FastAPI
+from fastapi.responses import Response
+import uvicorn
+import threading
+import time
+
+# Import security and logging modules
+import sys
+sys.path.append('../')
+from validation_schemas import (
+    VectorSearchRequest, validate_input, TOOL_SCHEMAS
+)
+from logging_config import setup_logging, log_async_errors
+
+# Initialize logging
+loggers = setup_logging("vector-search", "INFO")
+main_logger = loggers['main']
+security_logger = loggers['security']
+performance_logger = loggers['performance']
+
 # Initialize server
 server = Server("vector-search")
+
+main_logger.info("Vector Search MCP Server starting", extra={'component': 'startup'})
+
+# Initialize metrics
+registry = CollectorRegistry()
+tool_calls_total = Counter('mcp_tool_calls_total', 'Total MCP tool calls', ['tool_name', 'status'], registry=registry)
+tool_call_duration = Histogram('mcp_tool_call_duration_seconds', 'MCP tool call duration', ['tool_name'], registry=registry)
+server_uptime = Gauge('mcp_server_uptime_seconds', 'Server uptime in seconds', registry=registry)
+vector_operations_total = Gauge('mcp_vector_operations_total', 'Total vector operations', registry=registry)
+
+metrics_start_time = time.time()
+
+# Metrics HTTP server
+app = FastAPI()
+
+@app.get("/metrics")
+async def metrics():
+    server_uptime.set(time.time() - metrics_start_time)
+    return Response(generate_latest(registry), media_type="text/plain")
+
+@app.get("/health")
+async def health():
+    # Check Qdrant connection
+    qdrant_healthy = False
+    try:
+        if qdrant_client:
+            qdrant_client.get_collections()
+            qdrant_healthy = True
+    except Exception:
+        pass
+    
+    # Check Redis connection
+    redis_healthy = False
+    try:
+        if redis_client:
+            redis_client.ping()
+            redis_healthy = True
+    except Exception:
+        pass
+    
+    return {
+        "status": "healthy" if qdrant_healthy else "degraded",
+        "server": "vector-search-server",
+        "uptime": time.time() - metrics_start_time,
+        "timestamp": datetime.now().isoformat(),
+        "dependencies": {
+            "qdrant": "healthy" if qdrant_healthy else "unhealthy",
+            "redis": "healthy" if redis_healthy else "unavailable",
+            "embedder": "healthy" if embedder else "uninitialized",
+            "reranker": "healthy" if reranker else "unavailable"
+        }
+    }
+
+def start_metrics_server():
+    metrics_port = int(os.environ.get("PYTHON_METRICS_PORT", "9201"))
+    uvicorn.run(app, host="0.0.0.0", port=metrics_port, log_level="warning")
+
+# Start metrics server in background thread
+metrics_thread = threading.Thread(target=start_metrics_server, daemon=True)
+metrics_thread.start()
 
 # Configuration
 QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333")
@@ -228,9 +310,10 @@ async def list_tools() -> List[Tool]:
                         "description": "Collections to search. If empty, searches all collections."
                     },
                     "limit": {"type": "integer", "default": 10},
-                    "score_threshold": {"type": "number", "default": 0.7}
+                    "score_threshold": {"type": "number", "default": 0.7},
+                    "agent": {"type": "string"}
                 },
-                "required": ["query"]
+                "required": ["query", "agent"]
             }
         ),
         Tool(
@@ -302,6 +385,20 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
     if not qdrant_client:
         await initialize()
     
+    # Validate input if schema exists
+    if name in TOOL_SCHEMAS:
+        try:
+            validated_args = validate_input(TOOL_SCHEMAS[name], arguments)
+            arguments = validated_args.dict()
+            main_logger.info(f"Input validation passed for {name}", extra={'tool_name': name})
+        except ValueError as e:
+            security_logger.log_security_violation(
+                agent=arguments.get('agent', 'unknown'),
+                violation_type='invalid_input',
+                details={'tool': name, 'error': str(e), 'args': arguments}
+            )
+            return [TextContent(type="text", text=json.dumps({"error": f"Validation failed: {str(e)}"}))]
+    
     try:
         if name == "embed_and_store":
             return await embed_and_store(arguments)
@@ -320,9 +417,10 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
         else:
             raise ValueError(f"Unknown tool: {name}")
     except Exception as e:
-        logger.error(f"Tool execution error: {e}")
+        main_logger.error(f"Tool execution failed: {name}", extra={'tool_name': name, 'error': str(e)}, exc_info=True)
         return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
 
+@log_async_errors(main_logger)
 async def embed_and_store(args: Dict[str, Any]) -> List[TextContent]:
     """Embed text and store in specified collection"""
     text = args["text"]
@@ -354,6 +452,16 @@ async def embed_and_store(args: Dict[str, Any]) -> List[TextContent]:
             )
         ]
     )
+    
+    # Log successful storage
+    security_logger.log_access(
+        agent=args.get('agent', 'unknown'),
+        tool_name='embed_and_store',
+        args={'collection': collection, 'id': point_id},
+        result='success'
+    )
+    
+    main_logger.info(f"Vector stored successfully", extra={'collection': collection, 'vector_id': point_id})
     
     return [TextContent(type="text", text=json.dumps({
         "success": True,
@@ -415,6 +523,7 @@ async def batch_embed_and_store(args: Dict[str, Any]) -> List[TextContent]:
         "results": results
     }))]
 
+@log_async_errors(main_logger)
 async def semantic_search(args: Dict[str, Any]) -> List[TextContent]:
     """Perform semantic search in specified collections"""
     query = args["query"]
@@ -454,6 +563,16 @@ async def semantic_search(args: Dict[str, Any]) -> List[TextContent]:
     
     # Sort by score
     all_results.sort(key=lambda x: x["score"], reverse=True)
+    
+    # Log search operation
+    security_logger.log_access(
+        agent=args.get('agent', 'unknown'),
+        tool_name='semantic_search',
+        args={'query': query, 'collections': collections},
+        result=f'found_{len(all_results)}_items'
+    )
+    
+    main_logger.info(f"Semantic search completed", extra={'query': query, 'results_count': len(all_results)})
     
     return [TextContent(type="text", text=json.dumps({
         "query": query,

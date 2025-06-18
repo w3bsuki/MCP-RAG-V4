@@ -17,6 +17,15 @@ from mcp import Server
 from mcp.types import Tool, Resource, TextContent, ErrorData
 import mcp.server.stdio
 
+# Import security and logging modules
+import sys
+sys.path.append('../')
+from validation_schemas import (
+    StoreKnowledgeRequest, SearchKnowledgeRequest, validate_input,
+    TOOL_SCHEMAS
+)
+from logging_config import setup_logging, log_async_errors
+
 # Prometheus metrics
 from prometheus_client import Counter, Histogram, Gauge, start_http_server, CollectorRegistry, generate_latest
 from fastapi import FastAPI
@@ -57,9 +66,17 @@ def start_metrics_server():
 metrics_thread = threading.Thread(target=start_metrics_server, daemon=True)
 metrics_thread.start()
 
+# Initialize logging
+loggers = setup_logging("knowledge-base", "INFO")
+main_logger = loggers['main']
+security_logger = loggers['security']
+performance_logger = loggers['performance']
+
 # Initialize server
 server = Server("knowledge-base")
 KNOWLEDGE_ROOT = Path(os.environ.get("KNOWLEDGE_ROOT", "./knowledge"))
+
+main_logger.info("Knowledge Base MCP Server starting", extra={'component': 'startup'})
 
 @server.list_tools()
 async def list_tools() -> List[Tool]:
@@ -75,8 +92,10 @@ async def list_tools() -> List[Tool]:
                     "category": {"type": "string", "enum": ["pattern", "learning", "reference", "solution"]},
                     "tags": {"type": "array", "items": {"type": "string"}},
                     "source": {"type": "string"},
+                    "agent": {"type": "string"},
+                    "api_key": {"type": "string"}
                 },
-                "required": ["title", "content", "category", "tags"]
+                "required": ["title", "content", "category", "tags", "agent"]
             }
         ),
         Tool(
@@ -88,9 +107,11 @@ async def list_tools() -> List[Tool]:
                     "query": {"type": "string"},
                     "category": {"type": "string", "enum": ["pattern", "learning", "reference", "solution"]},
                     "tags": {"type": "array", "items": {"type": "string"}},
-                    "limit": {"type": "integer", "default": 10}
+                    "limit": {"type": "integer", "default": 10},
+                    "agent": {"type": "string"},
+                    "api_key": {"type": "string"}
                 },
-                "required": ["query"]
+                "required": ["query", "agent"]
             }
         ),
         Tool(
@@ -140,26 +161,42 @@ def with_metrics(tool_name):
 
 @server.call_tool()
 async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    # Validate input if schema exists
+    if name in TOOL_SCHEMAS:
+        try:
+            validated_args = validate_input(TOOL_SCHEMAS[name], arguments)
+            arguments = validated_args.dict()
+            main_logger.info(f"Input validation passed for {name}", extra={'tool_name': name})
+        except ValueError as e:
+            security_logger.log_security_violation(
+                agent=arguments.get('agent', 'unknown'),
+                violation_type='invalid_input',
+                details={'tool': name, 'error': str(e), 'args': arguments}
+            )
+            return [TextContent(type="text", text=json.dumps({"error": f"Validation failed: {str(e)}"}))]
+    
     # Wrap with metrics
     @with_metrics(name)
     async def handle_tool_call():
         try:
-        if name == "store_knowledge":
-            return await store_knowledge(arguments)
-        elif name == "search_knowledge":
-            return await search_knowledge(arguments)
-        elif name == "get_knowledge":
-            return await get_knowledge(arguments)
-        elif name == "extract_patterns":
-            return await extract_patterns(arguments)
-        else:
-            raise ValueError(f"Unknown tool: {name}")
+            if name == "store_knowledge":
+                return await store_knowledge(arguments)
+            elif name == "search_knowledge":
+                return await search_knowledge(arguments)
+            elif name == "get_knowledge":
+                return await get_knowledge(arguments)
+            elif name == "extract_patterns":
+                return await extract_patterns(arguments)
+            else:
+                raise ValueError(f"Unknown tool: {name}")
         except Exception as e:
+            main_logger.error(f"Tool execution failed: {name}", extra={'tool_name': name, 'error': str(e)}, exc_info=True)
             return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
     
     # Execute the wrapped function
     return await handle_tool_call()
 
+@log_async_errors(main_logger)
 async def store_knowledge(args: Dict[str, Any]) -> List[TextContent]:
     """Store a knowledge item"""
     category_dir = KNOWLEDGE_ROOT / args["category"]
@@ -192,6 +229,18 @@ async def store_knowledge(args: Dict[str, Any]) -> List[TextContent]:
     
     json_path.write_text(json.dumps(knowledge_item, indent=2))
     
+    # Log successful storage
+    security_logger.log_access(
+        agent=args.get('agent', 'unknown'),
+        tool_name='store_knowledge',
+        args={'title': args['title'], 'category': args['category']},
+        result='success'
+    )
+    
+    # Update metrics
+    knowledge_items_total.inc()
+    main_logger.info(f"Knowledge item stored: {item_id}", extra={'item_id': item_id, 'category': args['category']})
+    
     # Create markdown version
     md_content = f"""# {args['title']}
 
@@ -215,6 +264,7 @@ async def store_knowledge(args: Dict[str, Any]) -> List[TextContent]:
         "path": str(json_path)
     }))]
 
+@log_async_errors(main_logger)
 async def search_knowledge(args: Dict[str, Any]) -> List[TextContent]:
     """Search knowledge base"""
     results = []
@@ -262,12 +312,23 @@ async def search_knowledge(args: Dict[str, Any]) -> List[TextContent]:
     results.sort(key=lambda x: x["score"], reverse=True)
     results = results[:limit]
     
+    # Log search operation
+    security_logger.log_access(
+        agent=args.get('agent', 'unknown'),
+        tool_name='search_knowledge',
+        args={'query': args['query'], 'category': category_filter},
+        result=f'found_{len(results)}_items'
+    )
+    
+    main_logger.info(f"Knowledge search completed", extra={'query': args['query'], 'results_count': len(results)})
+    
     return [TextContent(type="text", text=json.dumps({
         "query": args["query"],
         "count": len(results),
         "results": results
     }, indent=2))]
 
+@log_async_errors(main_logger)
 async def get_knowledge(args: Dict[str, Any]) -> List[TextContent]:
     """Get specific knowledge item"""
     item_id = args["id"]
@@ -283,6 +344,7 @@ async def get_knowledge(args: Dict[str, Any]) -> List[TextContent]:
         "error": f"Knowledge item {item_id} not found"
     }))]
 
+@log_async_errors(main_logger)
 async def extract_patterns(args: Dict[str, Any]) -> List[TextContent]:
     """Extract patterns from content"""
     content = args["content"]
