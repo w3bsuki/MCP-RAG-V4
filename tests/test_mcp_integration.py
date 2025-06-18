@@ -1,67 +1,90 @@
 #!/usr/bin/env python3
 """
-Comprehensive integration tests for MCP-RAG-V4 system
+MCP Integration Tests - Test actual agent-MCP server communication
 """
 import pytest
 import asyncio
 import json
-import tempfile
 import subprocess
 from pathlib import Path
-from datetime import datetime
 import os
 import sys
 import time
 
-# Add MCP server paths for testing
-sys.path.append(str(Path(__file__).parent.parent / "mcp-servers"))
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-class TestMCPIntegration:
-    """Integration tests for MCP servers"""
+from agents.core.mcp_client import MCPClient
+
+@pytest.fixture
+async def mcp_client():
+    """Create MCP client for testing"""
+    client = MCPClient("/home/w3bsuki/MCP-RAG-V4/.mcp.json")
+    yield client
+    await client.disconnect_all()
+
+
+class TestMCPAgentIntegration:
+    """Real MCP integration tests"""
     
-    @pytest.fixture
-    def temp_config(self):
-        """Create temporary configuration for testing"""
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_path = Path(tmp_dir)
-            
-            # Create test configuration
-            config = {
-                "whitelist_paths": [str(tmp_path)],
-                "blacklist_paths": [],
-                "require_confirmation": ["delete"],
-                "max_file_size_mb": 10,
-                "enable_audit": True,
-                "api_keys": {"test_agent": "test_key"}
-            }
-            
-            config_file = tmp_path / "security-config.json"
-            config_file.write_text(json.dumps(config))
-            
-            # Set environment variables
-            os.environ["SECURITY_CONFIG"] = str(config_file)
-            os.environ["AUDIT_LOG"] = str(tmp_path / "audit.log")
-            
-            yield tmp_path
-    
-    def test_coordination_hub_task_management(self, temp_config):
-        """Test coordination hub task creation and management"""
-        from coordination_hub.server import create_task, update_task, get_tasks
+    @pytest.mark.asyncio
+    async def test_knowledge_base_connection(self, mcp_client):
+        """Test connection to knowledge base server"""
+        success = await mcp_client.connect_server("knowledge-base")
+        assert success, "Should connect to knowledge-base server"
         
-        # Test task creation
-        task_args = {
-            "title": "Test Task",
-            "description": "Integration test task",
-            "type": "implementation",
-            "priority": "high",
-            "assignee": "builder",
-            "acceptance_criteria": ["Test passes"]
-        }
+        # Test store knowledge
+        result = await mcp_client.store_knowledge(
+            content="Test knowledge item",
+            metadata={"category": "test", "tags": ["testing"]}
+        )
+        assert result is not None
         
-        # This would need to be adapted for actual MCP testing
-        # For now, testing the core logic
-        assert task_args["title"] == "Test Task"
-        assert task_args["type"] == "implementation"
+        # Test search knowledge
+        results = await mcp_client.search_knowledge("Test knowledge")
+        assert isinstance(results, list)
+
+    @pytest.mark.asyncio
+    async def test_vector_search_connection(self, mcp_client):
+        """Test connection to vector search server"""
+        success = await mcp_client.connect_server("vector-search")
+        assert success, "Should connect to vector-search server"
+        
+        # Test store document
+        result = await mcp_client.store_document(
+            content="Test document for vector search",
+            metadata={"type": "test"}
+        )
+        assert result is not None
+        
+        # Test vector search
+        results = await mcp_client.vector_search("Test document")
+        assert isinstance(results, list)
+
+    @pytest.mark.asyncio
+    async def test_coordination_hub_connection(self, mcp_client):
+        """Test connection to coordination hub server"""
+        success = await mcp_client.connect_server("coordination-hub")
+        assert success, "Should connect to coordination-hub server"
+        
+        # Test get tasks
+        tasks = await mcp_client.get_tasks()
+        assert isinstance(tasks, list)
+
+    @pytest.mark.asyncio
+    async def test_multiple_server_connections(self, mcp_client):
+        """Test connecting to multiple servers simultaneously"""
+        servers = ["knowledge-base", "vector-search", "coordination-hub"]
+        
+        for server in servers:
+            success = await mcp_client.connect_server(server)
+            assert success, f"Should connect to {server}"
+        
+        # Verify all connections are active
+        connected = mcp_client.get_connected_servers()
+        for server in servers:
+            assert server in connected, f"{server} should be connected"
     
     def test_knowledge_base_operations(self, temp_config):
         """Test knowledge base storage and retrieval"""

@@ -1,0 +1,121 @@
+architecture:
+  considerations:
+  - modularity
+  - database-design
+  - caching
+  patterns:
+  - mvc
+  - layered
+  - domain-driven
+  structure:
+  - controllers
+  - services
+  - repositories
+  - models
+  type: monolith
+components:
+- name: user_auth-service
+  purpose: User authentication
+  technology: jwt/oauth2
+  type: service
+- name: data_storage-service
+  purpose: Data persistence
+  technology: tbd
+  type: service
+dependencies:
+- name: fastapi
+  purpose: Web framework
+  version: ^0.100.0
+- name: pydantic
+  purpose: Data validation
+  version: ^2.0
+- name: sqlalchemy
+  purpose: ORM
+  version: ^2.0
+implementation_notes:
+- Follow language-specific style guides and conventions
+- Implement comprehensive error handling and logging
+- Use dependency injection for loose coupling
+- Write unit tests with >80% coverage
+interfaces:
+- authentication: JWT
+  endpoints:
+  - method: GET
+    path: /health
+    purpose: Health check
+  - method: GET
+    path: /metrics
+    purpose: Prometheus metrics
+  - method: GET
+    path: /user_auth
+    purpose: List user_auth
+  - method: POST
+    path: /user_auth
+    purpose: Create user_auth
+  - method: GET
+    path: /user_auth/{id}
+    purpose: Get user_auth
+  - method: PUT
+    path: /user_auth/{id}
+    purpose: Update user_auth
+  - method: DELETE
+    path: /user_auth/{id}
+    purpose: Delete user_auth
+  - method: GET
+    path: /data_storage
+    purpose: List data_storage
+  - method: POST
+    path: /data_storage
+    purpose: Create data_storage
+  - method: GET
+    path: /data_storage/{id}
+    purpose: Get data_storage
+  - method: PUT
+    path: /data_storage/{id}
+    purpose: Update data_storage
+  - method: DELETE
+    path: /data_storage/{id}
+    purpose: Delete data_storage
+  name: main-api
+  type: REST
+  version: v1
+metadata:
+  created_at: '2025-06-18T14:34:08.163739'
+  created_by: test-architect
+  design_type: monolith
+  name: Test API Service
+  version: 1.0.0
+performance_requirements:
+  availability: 99.9%
+  response_time:
+    p95: 200ms
+    p99: 500ms
+  scalability: horizontal
+  throughput: 1000 req/sec
+purpose: A REST API service for testing
+reference_patterns:
+- content: 'Mock knowledge result for query: architecture monolith pattern'
+  id: '1'
+  metadata:
+    relevance: 0.9
+    type: mock
+security_considerations:
+- Implement input validation on all endpoints
+- Use parameterized queries to prevent SQL injection
+- Implement rate limiting (100 req/min default)
+- Secure all secrets using environment variables or vault
+- Enable CORS with appropriate origins
+- Implement JWT with short expiration times
+testing_approach:
+  integration_tests:
+    scope: API endpoints, database operations
+    tools: pytest-asyncio, supertest
+  performance_tests:
+    scenarios:
+    - normal load
+    - peak load
+    - stress test
+    tools: locust, k6
+  unit_tests:
+    coverage: 80%
+    framework: pytest/jest

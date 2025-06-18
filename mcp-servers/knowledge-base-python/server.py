@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Knowledge Base MCP Server
+Knowledge Base MCP Server with HTTP API
 Handles markdown docs, patterns, and knowledge retrieval
 """
 import json
@@ -9,6 +9,8 @@ import asyncio
 from pathlib import Path
 from typing import Dict, List, Any
 from datetime import datetime
+from aiohttp import web
+import threading
 
 from mcp.server import Server
 from mcp.types import Tool, TextContent
@@ -16,6 +18,10 @@ import mcp.server.stdio
 
 # Initialize server
 server = Server("knowledge-base")
+
+# HTTP API for agents
+app = web.Application()
+routes = web.RouteTableDef()
 
 # Knowledge storage
 KNOWLEDGE_ROOT = Path(os.environ.get("KNOWLEDGE_ROOT", "./knowledge"))
@@ -202,11 +208,73 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             text=f"Unknown tool: {name}"
         )]
 
+# HTTP API Endpoints
+@routes.post('/store_knowledge')
+async def http_store_knowledge(request):
+    """HTTP endpoint for storing knowledge"""
+    data = await request.json()
+    content = data.get('content', '')
+    metadata = data.get('metadata', {})
+    
+    # Use the existing store logic
+    items = load_knowledge()
+    new_item = {
+        "id": len(items) + 1,
+        "title": metadata.get('title', f"Knowledge Item {len(items) + 1}"),
+        "content": content,
+        "tags": metadata.get('tags', []),
+        "category": metadata.get('category', 'reference'),
+        "created_at": datetime.now().isoformat()
+    }
+    items.append(new_item)
+    save_knowledge(items)
+    
+    return web.json_response({"status": "success", "id": new_item["id"]})
+
+@routes.post('/search_knowledge')
+async def http_search_knowledge(request):
+    """HTTP endpoint for searching knowledge"""
+    data = await request.json()
+    query = data.get('query', '').lower()
+    limit = data.get('limit', 10)
+    
+    # Use the existing search logic
+    items = load_knowledge()
+    results = []
+    for item in items:
+        content = item.get("content", "").lower()
+        title = item.get("title", "").lower()
+        if query in content or query in title:
+            results.append(item)
+            if len(results) >= limit:
+                break
+    
+    return web.json_response({"results": results})
+
+@routes.get('/health')
+async def health_check(request):
+    """Health check endpoint"""
+    return web.json_response({"status": "ok", "service": "knowledge-base"})
+
+app.add_routes(routes)
+
+async def start_http_server():
+    """Start HTTP server on port 8501"""
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8501)
+    await site.start()
+    print("HTTP API running on http://localhost:8501")
+
 async def main():
-    """Run the server"""
+    """Run both MCP and HTTP servers"""
     print(f"Starting Knowledge Base MCP Server...")
     print(f"Knowledge root: {KNOWLEDGE_ROOT}")
     
+    # Start HTTP server in background
+    asyncio.create_task(start_http_server())
+    
+    # Run MCP server
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream,

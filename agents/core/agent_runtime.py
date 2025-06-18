@@ -17,7 +17,7 @@ import logging
 from contextlib import asynccontextmanager
 
 # MCP client integration
-from .simple_mcp_client import SimpleMCPClient, get_simple_mcp_client
+from .http_mcp_client import HTTPMCPClient, get_http_mcp_client
 
 try:
     import redis.asyncio as redis
@@ -99,9 +99,8 @@ class AgentRuntime(ABC):
         self.file_position = 0
         
         # MCP client integration
-        self.mcp_client: Optional[SimpleMCPClient] = None
+        self.mcp_client: Optional[HTTPMCPClient] = None
         self.mcp_enabled = config.get('enable_mcp', True)  # Default to True
-        self.mcp_config_path = config.get('mcp_config', '/home/w3bsuki/MCP-RAG-V4/.mcp.json')
         
         # Ensure shared directories exist
         self.shared_dir.mkdir(exist_ok=True)
@@ -113,13 +112,13 @@ class AgentRuntime(ABC):
         self.logger = logging.getLogger(f"{self.agent_role}.{self.agent_id}")
         self._setup_handlers()
         
-        # Initialize MCP client immediately
+        # Initialize HTTP MCP client immediately
         if self.mcp_enabled:
             try:
-                self.mcp_client = SimpleMCPClient(self.mcp_config_path)
-                self.logger.info("Simple MCP client initialized")
+                self.mcp_client = HTTPMCPClient()
+                self.logger.info("HTTP MCP client initialized")
             except Exception as e:
-                self.logger.error(f"Failed to initialize MCP client: {e}")
+                self.logger.error(f"Failed to initialize HTTP MCP client: {e}")
                 self.mcp_client = None
     
     def _setup_handlers(self):
@@ -411,7 +410,7 @@ class AgentRuntime(ABC):
         
         # Cleanup MCP client
         if self.mcp_client:
-            await self.mcp_client.stop_all_servers()
+            await self.mcp_client.close()
         
         if self.redis_client:
             await self.redis_client.close()

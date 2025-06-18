@@ -272,6 +272,10 @@ async def main():
     print(f"Starting Vector Search MCP Server...")
     print(f"Storage directory: {STORAGE_DIR}")
     
+    # Initialize services
+    init_qdrant()
+    init_embeddings()
+    
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream,

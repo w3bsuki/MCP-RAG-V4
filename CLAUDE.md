@@ -1,6 +1,13 @@
-# MCP-RAG-V4
+# Claude Project Conventions for MCP-RAG-V4
 
-Multi-agent orchestration system with advanced RAG capabilities.
+## 🚨 Critical Development Rules
+
+* **Never change external behaviour without explicit approval**
+* **All refactors must keep tests green; tests are immutable specs**
+* **Use ./mcp-servers/{python,typescript} for SDK code only**
+* **Put integration tests under ./tests and unit tests next to modules**
+* **Use Pydantic (Python) and Zod (TS) for schema validation**
+* **No code changes without plan-review-approve cycle**
 
 ## 🎯 Quick Navigation
 
@@ -29,18 +36,28 @@ docker-compose up -d
 2. **Verification** - Test everything
 3. **Simplicity** - Avoid over-engineering
 4. **Isolation** - Each agent in its workspace
+5. **Plan-First** - Always plan before implementing
 
 ## 📁 Project Structure
 
 ```
 MCP-RAG-V4/
 ├── agents/          # Agent orchestration
-├── mcp-servers/     # MCP protocol servers  
+├── mcp-servers/     # MCP protocol servers (SDK-first design)
+├── mcp-venv/        # Frozen Python environment for MCP
 ├── rag-system/      # Vector search & RAG
 ├── ui/dashboard/    # Monitoring interface
 ├── tests/           # Test suites
 └── docker/          # Container configs
 ```
+
+## 🔧 MCP Architecture
+
+The MCP design follows SDK-first approach:
+- **mcp-servers/**: Protocol implementation code
+- **mcp-venv/**: Isolated Python environment
+- **.mcp.json**: Machine-readable server configuration
+- **Separation**: Allows SDK evolution without touching core schema
 
 ## 🔗 Key Resources
 

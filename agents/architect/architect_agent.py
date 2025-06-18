@@ -193,7 +193,7 @@ class ArchitectAgent(AgentRuntime):
         similar_patterns = []
         if self.mcp_client:
             try:
-                similar_patterns = await self.mcp_client.mock_search_knowledge(
+                similar_patterns = await self.mcp_client.search_knowledge(
                     f"architecture {design_type} pattern", limit=3
                 )
                 self.logger.info(f"Found {len(similar_patterns)} similar patterns in knowledge base")
@@ -228,7 +228,7 @@ class ArchitectAgent(AgentRuntime):
         # Store this specification in knowledge base for future reference
         if self.mcp_client:
             try:
-                await self.mcp_client.mock_store_knowledge(
+                await self.mcp_client.store_knowledge(
                     json.dumps(specification, indent=2),
                     metadata={
                         "type": "specification",

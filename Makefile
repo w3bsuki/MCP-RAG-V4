@@ -107,6 +107,11 @@ test: ## Run all tests
 	@python -m pytest tests/ -v
 	@echo "✅ Tests completed!"
 
+test-mcp: ## Run MCP integration tests only
+	@echo "🔗 Running MCP integration tests..."
+	@python -m pytest tests/test_mcp_integration.py::TestMCPAgentIntegration -v
+	@echo "✅ MCP integration tests completed!"
+
 test-integration: ## Run integration tests
 	@echo "🔗 Running integration tests..."
 	@python tests/test_mcp_integration.py

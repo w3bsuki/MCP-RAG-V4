@@ -1,0 +1,8 @@
+{
+  "tasks": [],
+  "agents": {
+    "architect": {"status": "ready", "current_task": null},
+    "builder": {"status": "ready", "current_task": null},
+    "validator": {"status": "ready", "current_task": null}
+  }
+}

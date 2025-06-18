@@ -30,13 +30,14 @@ class MCPServerConfig:
 class MCPClient:
     """
     MCP Client for agent integration
-    Manages connections to multiple MCP servers
+    Manages persistent connections to multiple MCP servers
     """
     
     def __init__(self, config_path: str = None):
         self.logger = logging.getLogger("mcp_client")
         self.sessions: Dict[str, ClientSession] = {}
         self.server_configs: Dict[str, MCPServerConfig] = {}
+        self.server_contexts: Dict[str, Any] = {}  # Store connection contexts
         self.config_path = config_path or "/home/w3bsuki/MCP-RAG-V4/.mcp.json"
         
         # Load server configurations
@@ -70,7 +71,7 @@ class MCPClient:
             self.logger.error(f"Failed to load MCP config: {e}")
     
     async def connect_server(self, server_name: str) -> bool:
-        """Connect to an MCP server"""
+        """Connect to an MCP server with persistent connection"""
         if server_name not in self.server_configs:
             self.logger.error(f"Unknown server: {server_name}")
             return False
@@ -87,24 +88,37 @@ class MCPClient:
             if 'PYTHONPATH' not in env:
                 env['PYTHONPATH'] = '/home/w3bsuki/MCP-RAG-V4'
             
+            # Use Python from venv for Python servers
+            command = config.command
+            if command == 'python3':
+                command = '/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python'
+            
             # Create server parameters
             server_params = StdioServerParameters(
-                command=config.command,
+                command=command,
                 args=config.args,
                 env=env,
                 cwd=config.cwd
             )
             
-            # Connect via stdio using context manager properly
-            async with stdio_client(server_params) as (read, write):
-                session = ClientSession(read, write)
-                
-                # Initialize session
-                await session.initialize()
-                
-                self.sessions[server_name] = session
-                self.logger.info(f"Connected to MCP server: {server_name}")
-                return True
+            # Connect via stdio client properly
+            from mcp.client.stdio import stdio_client
+            
+            # Create and store the connection context
+            context = stdio_client(server_params)
+            read_stream, write_stream = await context.__aenter__()
+            
+            self.server_contexts[server_name] = context
+            
+            # Create session
+            session = ClientSession(read_stream, write_stream)
+            
+            # Initialize session
+            await session.initialize()
+            
+            self.sessions[server_name] = session
+            self.logger.info(f"Connected to MCP server: {server_name}")
+            return True
             
         except Exception as e:
             self.logger.error(f"Failed to connect to {server_name}: {e}")
@@ -120,6 +134,15 @@ class MCPClient:
                 self.logger.info(f"Disconnected from {server_name}")
             except Exception as e:
                 self.logger.error(f"Error disconnecting from {server_name}: {e}")
+        
+        if server_name in self.server_contexts:
+            try:
+                context = self.server_contexts[server_name]
+                await context.__aexit__(None, None, None)
+                del self.server_contexts[server_name]
+                self.logger.info(f"Closed connection context: {server_name}")
+            except Exception as e:
+                self.logger.error(f"Error closing context {server_name}: {e}")
     
     async def disconnect_all(self):
         """Disconnect from all MCP servers"""

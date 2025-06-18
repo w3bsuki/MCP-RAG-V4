@@ -9,7 +9,8 @@
       "command": "/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python", 
       "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/knowledge-base-python/server.py"],
       "env": {
-        "KNOWLEDGE_ROOT": "/home/w3bsuki/MCP-RAG-V4/rag-system/knowledge"
+        "KNOWLEDGE_ROOT": "/home/w3bsuki/MCP-RAG-V4/rag-system/knowledge",
+        "PYTHONPATH": "/home/w3bsuki/MCP-RAG-V4"
       },
       "description": "Knowledge storage and pattern extraction"
     },
@@ -18,7 +19,9 @@
       "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/vector-search-python/server.py"],
       "env": {
         "QDRANT_URL": "http://localhost:6333",
-        "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2"
+        "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
+        "PYTHONPATH": "/home/w3bsuki/MCP-RAG-V4",
+        "STORAGE_DIR": "/home/w3bsuki/MCP-RAG-V4/vectors"
       },
       "description": "Semantic search with Qdrant"
     },
@@ -26,7 +29,8 @@
       "command": "/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python",
       "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/coordination-hub/server.py"],
       "env": {
-        "SHARED_DIR": "/home/w3bsuki/MCP-RAG-V4/shared"
+        "SHARED_DIR": "/home/w3bsuki/MCP-RAG-V4/shared",
+        "PYTHONPATH": "/home/w3bsuki/MCP-RAG-V4"
       },
       "description": "Inter-agent coordination and task management"
     }
