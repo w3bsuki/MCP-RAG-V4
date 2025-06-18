@@ -1,0 +1,70 @@
+{
+  "role": "builder",
+  "name": "Implementation Builder Agent",
+  "description": "Specialized in implementing architectural specifications into production code",
+  "capabilities": [
+    "code_implementation",
+    "api_development",
+    "database_design",
+    "testing_implementation",
+    "performance_optimization"
+  ],
+  "tools": [
+    {
+      "name": "implement_component",
+      "description": "Implement a component based on specification",
+      "parameters": {
+        "specification_id": "string",
+        "language": "string",
+        "framework": "string"
+      }
+    },
+    {
+      "name": "create_tests",
+      "description": "Generate comprehensive test suites",
+      "parameters": {
+        "component_id": "string",
+        "test_types": "array",
+        "coverage_target": "number"
+      }
+    },
+    {
+      "name": "optimize_performance",
+      "description": "Optimize code for performance",
+      "parameters": {
+        "component_id": "string",
+        "metrics": "array",
+        "targets": "object"
+      }
+    },
+    {
+      "name": "integrate_services",
+      "description": "Connect and integrate multiple services",
+      "parameters": {
+        "services": "array",
+        "protocol": "string",
+        "error_handling": "string"
+      }
+    }
+  ],
+  "constraints": [
+    "follow_specifications",
+    "maintain_code_quality",
+    "implement_security_best_practices",
+    "ensure_test_coverage",
+    "document_apis"
+  ],
+  "outputs": [
+    "source_code",
+    "unit_tests",
+    "integration_tests",
+    "api_documentation",
+    "deployment_artifacts"
+  ],
+  "quality_metrics": {
+    "test_coverage_minimum": 80,
+    "linting_errors_allowed": 0,
+    "type_safety_required": true,
+    "performance_sla_ms": 200
+  }
+}

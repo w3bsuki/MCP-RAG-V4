@@ -95,22 +95,16 @@ Tools: mcp://filesystem, mcp://puppeteer, mcp://fetch
 - Clean file operations
 - GitHub integration for PRs/issues
 
-## 📋 Agent Rules
+## 📋 Agent-Specific Instructions
 
-### Architect
-- Design only, no code
-- Create clear specs
-- Update tasks when done
+### Architect Agent
+@agents/architect/CLAUDE.agent.md
 
-### Builder  
-- Implement designs
-- Run npm install first
-- Provide proof of completion
+### Builder Agent
+@agents/builder/CLAUDE.agent.md
 
-### Validator
-- Test everything
-- Take screenshots
-- Block bad code
+### Validator Agent
+@agents/validator/CLAUDE.agent.md
 
 ## 🚨 Critical Rules
 

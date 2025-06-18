@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP-RAG-V4 Agent Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .agent-card {
+            transition: all 0.3s ease;
+        }
+        .agent-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .status-indicator {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        .task-progress {
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Agent Status Component
+        const AgentCard = ({ agent }) => {
+            const statusColors = {
+                'idle': 'bg-gray-400',
+                'planning': 'bg-blue-500',
+                'executing': 'bg-yellow-500',
+                'completed': 'bg-green-500',
+                'error': 'bg-red-500'
+            };
+
+            const statusIcons = {
+                'idle': 'fa-clock',
+                'planning': 'fa-brain',
+                'executing': 'fa-cog fa-spin',
+                'completed': 'fa-check-circle',
+                'error': 'fa-exclamation-triangle'
+            };
+
+            return (
+                <div className="agent-card bg-white rounded-lg p-6 shadow-md">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold capitalize">{agent.name} Agent</h3>
+                        <div className={`status-indicator w-3 h-3 rounded-full ${statusColors[agent.status]}`}></div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                            <i className={`fas ${statusIcons[agent.status]} text-gray-600`}></i>
+                            <span className="text-sm text-gray-600 capitalize">{agent.status}</span>
+                        </div>
+                        
+                        {agent.currentTask && (
+                            <div className="bg-gray-50 rounded p-3">
+                                <p className="text-sm font-medium text-gray-700">Current Task:</p>
+                                <p className="text-sm text-gray-600">{agent.currentTask}</p>
+                                {agent.progress !== undefined && (
+                                    <div className="mt-2">
+                                        <div className="w-full bg-gray-200 rounded-full h-2">
+                                            <div 
+                                                className="task-progress bg-blue-500 h-2 rounded-full"
+                                                style={{ width: `${agent.progress}%` }}
+                                            ></div>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">{agent.progress}% complete</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <span className="text-gray-500">Tasks:</span>
+                                <span className="ml-2 font-medium">{agent.tasksCompleted || 0}</span>
+                            </div>
+                            <div>
+                                <span className="text-gray-500">Success:</span>
+                                <span className="ml-2 font-medium">{agent.successRate || 0}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Task Queue Component
+        const TaskQueue = ({ tasks }) => {
+            const priorityColors = {
+                'high': 'border-red-500 bg-red-50',
+                'medium': 'border-yellow-500 bg-yellow-50',
+                'low': 'border-green-500 bg-green-50'
+            };
+
+            const statusBadges = {
+                'pending': 'bg-gray-200 text-gray-700',
+                'planning': 'bg-blue-200 text-blue-700',
+                'executing': 'bg-yellow-200 text-yellow-700',
+                'completed': 'bg-green-200 text-green-700',
+                'failed': 'bg-red-200 text-red-700'
+            };
+
+            return (
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                    <h2 className="text-xl font-semibold mb-4">Task Queue</h2>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {tasks.map(task => (
+                            <div 
+                                key={task.id} 
+                                className={`border-l-4 p-3 rounded ${priorityColors[task.priority]}`}
+                            >
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <h4 className="font-medium text-gray-800">{task.name}</h4>
+                                        <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                                    </div>
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${statusBadges[task.status]}`}>
+                                        {task.status}
+                                    </span>
+                                </div>
+                                {task.assignedTo && (
+                                    <div className="mt-2 text-xs text-gray-500">
+                                        <i className="fas fa-user mr-1"></i>
+                                        Assigned to {task.assignedTo}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Metrics Chart Component
+        const MetricsChart = ({ metrics }) => {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+
+            useEffect(() => {
+                if (chartRef.current) {
+                    const ctx = chartRef.current.getContext('2d');
+                    
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+
+                    chartInstance.current = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: metrics.timestamps,
+                            datasets: [
+                                {
+                                    label: 'Tasks Completed',
+                                    data: metrics.tasksCompleted,
+                                    borderColor: 'rgb(59, 130, 246)',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    tension: 0.4
+                                },
+                                {
+                                    label: 'Success Rate (%)',
+                                    data: metrics.successRate,
+                                    borderColor: 'rgb(34, 197, 94)',
+                                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                    tension: 0.4
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+
+                return () => {
+                    if (chartInstance.current) {
+                        chartInstance.current.destroy();
+                    }
+                };
+            }, [metrics]);
+
+            return (
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                    <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>
+                    <div className="h-64">
+                        <canvas ref={chartRef}></canvas>
+                    </div>
+                </div>
+            );
+        };
+
+        // RAG Search Component
+        const RAGSearch = ({ onSearch }) => {
+            const [query, setQuery] = useState('');
+            const [results, setResults] = useState([]);
+            const [loading, setLoading] = useState(false);
+
+            const handleSearch = async () => {
+                if (!query.trim()) return;
+                
+                setLoading(true);
+                try {
+                    // Simulate API call
+                    const mockResults = await new Promise(resolve => {
+                        setTimeout(() => {
+                            resolve([
+                                {
+                                    id: '1',
+                                    title: 'MCP Protocol Documentation',
+                                    content: 'The Model Context Protocol enables seamless integration...',
+                                    score: 0.95,
+                                    source: 'documentation'
+                                },
+                                {
+                                    id: '2',
+                                    title: 'Agent Coordination Guide',
+                                    content: 'Multi-agent systems require careful coordination...',
+                                    score: 0.87,
+                                    source: 'guide'
+                                }
+                            ]);
+                        }, 1000);
+                    });
+                    setResults(mockResults);
+                } catch (error) {
+                    console.error('Search failed:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            return (
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                    <h2 className="text-xl font-semibold mb-4">RAG Knowledge Search</h2>
+                    
+                    <div className="flex space-x-2 mb-4">
+                        <input
+                            type="text"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                            placeholder="Search knowledge base..."
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                            onClick={handleSearch}
+                            disabled={loading}
+                            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <i className="fas fa-spinner fa-spin"></i>
+                            ) : (
+                                <i className="fas fa-search"></i>
+                            )}
+                        </button>
+                    </div>
+                    
+                    {results.length > 0 && (
+                        <div className="space-y-3 max-h-64 overflow-y-auto">
+                            {results.map(result => (
+                                <div key={result.id} className="border-l-4 border-blue-500 pl-4 py-2">
+                                    <h4 className="font-medium text-gray-800">{result.title}</h4>
+                                    <p className="text-sm text-gray-600 mt-1">{result.content}</p>
+                                    <div className="flex justify-between items-center mt-2">
+                                        <span className="text-xs text-gray-500">
+                                            <i className="fas fa-folder mr-1"></i>
+                                            {result.source}
+                                        </span>
+                                        <span className="text-xs font-medium text-blue-600">
+                                            Score: {(result.score * 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Main Dashboard Component
+        const Dashboard = () => {
+            const [agents, setAgents] = useState([
+                { name: 'admin', status: 'idle', currentTask: null, tasksCompleted: 0, successRate: 100 },
+                { name: 'frontend', status: 'executing', currentTask: 'Building UI components', progress: 65, tasksCompleted: 12, successRate: 92 },
+                { name: 'backend', status: 'planning', currentTask: 'Designing API endpoints', progress: 30, tasksCompleted: 8, successRate: 88 },
+                { name: 'rag', status: 'completed', currentTask: 'Document indexing complete', progress: 100, tasksCompleted: 25, successRate: 96 },
+                { name: 'validator', status: 'idle', currentTask: null, tasksCompleted: 15, successRate: 100 }
+            ]);
+
+            const [tasks, setTasks] = useState([
+                { id: '1', name: 'Implement Authentication', description: 'Add JWT-based auth to API', status: 'executing', priority: 'high', assignedTo: 'backend' },
+                { id: '2', name: 'Create Dashboard UI', description: 'Build React dashboard components', status: 'planning', priority: 'medium', assignedTo: 'frontend' },
+                { id: '3', name: 'Index Documentation', description: 'Process and index MCP docs', status: 'completed', priority: 'low', assignedTo: 'rag' },
+                { id: '4', name: 'Security Audit', description: 'Validate input sanitization', status: 'pending', priority: 'high', assignedTo: 'validator' }
+            ]);
+
+            const [metrics, setMetrics] = useState({
+                timestamps: ['10:00', '10:15', '10:30', '10:45', '11:00'],
+                tasksCompleted: [5, 8, 12, 15, 20],
+                successRate: [100, 95, 92, 94, 96]
+            });
+
+            // Simulate real-time updates
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    // Update agent statuses
+                    setAgents(prev => prev.map(agent => {
+                        if (agent.status === 'executing' && agent.progress < 100) {
+                            return { ...agent, progress: Math.min(agent.progress + 5, 100) };
+                        }
+                        return agent;
+                    }));
+                }, 2000);
+
+                return () => clearInterval(interval);
+            }, []);
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm border-b">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <i className="fas fa-robot text-2xl text-blue-500"></i>
+                                    <h1 className="text-2xl font-bold text-gray-900">MCP-RAG-V4 Agent Dashboard</h1>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    <span className="text-sm text-gray-500">
+                                        <i className="fas fa-clock mr-1"></i>
+                                        Last updated: {new Date().toLocaleTimeString()}
+                                    </span>
+                                    <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                        <i className="fas fa-sync-alt mr-2"></i>
+                                        Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {/* Agent Status Grid */}
+                        <section className="mb-8">
+                            <h2 className="text-xl font-semibold mb-4">Agent Status</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                                {agents.map(agent => (
+                                    <AgentCard key={agent.name} agent={agent} />
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Task Queue and Metrics */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <TaskQueue tasks={tasks} />
+                            <MetricsChart metrics={metrics} />
+                        </div>
+
+                        {/* RAG Search */}
+                        <RAGSearch />
+                    </main>
+                </div>
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

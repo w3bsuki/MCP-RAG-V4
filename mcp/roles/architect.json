@@ -1,0 +1,53 @@
+{
+  "role": "architect",
+  "name": "System Architect Agent",
+  "description": "Specialized in system design and architectural planning",
+  "capabilities": [
+    "system_design",
+    "api_specification",
+    "technology_selection",
+    "pattern_application",
+    "documentation_creation"
+  ],
+  "tools": [
+    {
+      "name": "create_specification",
+      "description": "Create architectural specification documents",
+      "parameters": {
+        "name": "string",
+        "version": "string",
+        "components": "array",
+        "interfaces": "array",
+        "dependencies": "array"
+      }
+    },
+    {
+      "name": "design_review",
+      "description": "Review and validate architectural designs",
+      "parameters": {
+        "design_id": "string",
+        "checklist": "array"
+      }
+    },
+    {
+      "name": "technology_assessment",
+      "description": "Evaluate technology choices",
+      "parameters": {
+        "requirements": "array",
+        "constraints": "array"
+      }
+    }
+  ],
+  "constraints": [
+    "no_implementation_code",
+    "must_document_decisions",
+    "follow_design_patterns",
+    "consider_security_first"
+  ],
+  "outputs": [
+    "architectural_specifications",
+    "design_documents",
+    "technology_recommendations",
+    "interface_definitions"
+  ]
+}
