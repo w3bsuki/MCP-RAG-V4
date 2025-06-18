@@ -6,6 +6,8 @@ Handles inter-agent coordination and task management
 import json
 import os
 import asyncio
+import logging
+import sys
 from pathlib import Path
 from typing import Dict, List, Any
 from datetime import datetime
@@ -13,6 +15,10 @@ from datetime import datetime
 from mcp.server import Server
 from mcp.types import Tool, TextContent
 import mcp.server.stdio
+
+# Configure logging to stderr
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize server
 server = Server("coordination-hub")
@@ -42,7 +48,7 @@ def save_tasks(tasks: List[Dict[str, Any]]):
         with open(TASKS_FILE, 'w') as f:
             json.dump({"tasks": tasks}, f, indent=2)
     except Exception as e:
-        print(f"Error saving tasks: {e}")
+        logger.error(f"Error saving tasks: {e}")
 
 @server.list_tools()
 async def list_tools() -> List[Tool]:
@@ -312,8 +318,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
 
 async def main():
     """Run the server"""
-    print(f"Starting Coordination Hub MCP Server...")
-    print(f"Shared directory: {SHARED_DIR}")
+    # Don't print to stdout - it interferes with MCP protocol
     
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(

@@ -6,6 +6,8 @@ Integrates with Qdrant for semantic search across multiple collections
 import json
 import os
 import asyncio
+import logging
+import sys
 from pathlib import Path
 from typing import Dict, List, Any
 from datetime import datetime
@@ -14,6 +16,10 @@ from mcp.server import Server
 from mcp.types import Tool, TextContent
 import mcp.server.stdio
 
+# Configure logging to stderr
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Try to import Qdrant
 try:
     from qdrant_client import QdrantClient
@@ -21,7 +27,7 @@ try:
     QDRANT_AVAILABLE = True
 except ImportError:
     QDRANT_AVAILABLE = False
-    print("Warning: Qdrant not available, using simple text search fallback")
+    logger.warning("Qdrant not available, using simple text search fallback")
 
 # Try to import sentence transformers for embeddings
 try:
@@ -29,7 +35,7 @@ try:
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
-    print("Warning: sentence-transformers not available")
+    logger.warning("sentence-transformers not available")
 
 # Initialize server
 server = Server("vector-search")
@@ -62,10 +68,10 @@ def init_qdrant():
                     collection_name=COLLECTION_NAME,
                     vectors_config=VectorParams(size=384, distance=Distance.COSINE)
                 )
-            print(f"Qdrant initialized successfully at {QDRANT_URL}")
+            logger.info(f"Qdrant initialized successfully at {QDRANT_URL}")
             return True
         except Exception as e:
-            print(f"Failed to initialize Qdrant: {e}")
+            logger.error(f"Failed to initialize Qdrant: {e}")
             return False
     return False
 
@@ -75,10 +81,10 @@ def init_embeddings():
     if EMBEDDINGS_AVAILABLE:
         try:
             embedding_model = SentenceTransformer(EMBEDDING_MODEL)
-            print(f"Embedding model loaded: {EMBEDDING_MODEL}")
+            logger.info(f"Embedding model loaded: {EMBEDDING_MODEL}")
             return True
         except Exception as e:
-            print(f"Failed to load embedding model: {e}")
+            logger.error(f"Failed to load embedding model: {e}")
             return False
     return False
 
@@ -100,7 +106,7 @@ def save_documents(documents: List[Dict[str, Any]]):
         with open(DOCUMENTS_FILE, 'w') as f:
             json.dump({"documents": documents}, f, indent=2)
     except Exception as e:
-        print(f"Error saving documents: {e}")
+        logger.error(f"Error saving documents: {e}")
 
 @server.list_tools()
 async def list_tools() -> List[Tool]:
@@ -269,8 +275,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
 
 async def main():
     """Run the server"""
-    print(f"Starting Vector Search MCP Server...")
-    print(f"Storage directory: {STORAGE_DIR}")
+    # Don't print to stdout - it interferes with MCP protocol
     
     # Initialize services
     init_qdrant()

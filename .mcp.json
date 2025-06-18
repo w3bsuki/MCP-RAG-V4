@@ -2,123 +2,21 @@
   "mcpServers": {
     "filesystem": {
       "command": "npx",
-      "args": ["@modelcontextprotocol/server-filesystem", "/home/w3bsuki/MCP-RAG-V4"],
-      "description": "Secure filesystem operations"
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/w3bsuki/MCP-RAG-V4"],
+      "description": "Filesystem operations"
     },
-    "knowledge-base": {
-      "command": "/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python", 
-      "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/knowledge-base-python/server.py"],
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
-        "KNOWLEDGE_ROOT": "/home/w3bsuki/MCP-RAG-V4/rag-system/knowledge",
-        "PYTHONPATH": "/home/w3bsuki/MCP-RAG-V4"
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       },
-      "description": "Knowledge storage and pattern extraction"
+      "description": "GitHub operations"
     },
-    "vector-search": {
-      "command": "/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python",
-      "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/vector-search-python/server.py"],
-      "env": {
-        "QDRANT_URL": "http://localhost:6333",
-        "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
-        "PYTHONPATH": "/home/w3bsuki/MCP-RAG-V4",
-        "STORAGE_DIR": "/home/w3bsuki/MCP-RAG-V4/vectors"
-      },
-      "description": "Semantic search with Qdrant"
-    },
-    "coordination-hub": {
-      "command": "/home/w3bsuki/MCP-RAG-V4/mcp-venv/bin/python",
-      "args": ["/home/w3bsuki/MCP-RAG-V4/mcp-servers/coordination-hub/server.py"],
-      "env": {
-        "SHARED_DIR": "/home/w3bsuki/MCP-RAG-V4/shared",
-        "PYTHONPATH": "/home/w3bsuki/MCP-RAG-V4"
-      },
-      "description": "Inter-agent coordination and task management"
-    }
-  },
-  "permissions": {
-    "alwaysAllow": [
-      "filesystem/read_file",
-      "filesystem/list_directory", 
-      "vector-search/search",
-      "knowledge-base/search",
-      "coordination-hub/get_tasks",
-      "testing-tools/run_tests",
-      "testing-tools/lint_code"
-    ],
-    "requireConfirmation": [
-      "filesystem/write_file",
-      "filesystem/delete_file",
-      "git-ops/commit",
-      "git-ops/push", 
-      "git-ops/reset",
-      "testing-tools/security_scan",
-      "github/create_pr",
-      "github/merge_pr"
-    ]
-  },
-  "agents": {
-    "architect": {
-      "workingDir": "./git-worktrees/architect",
-      "allowedServers": [
-        "filesystem",
-        "vector-search", 
-        "knowledge-base",
-        "coordination-hub",
-        "github"
-      ],
-      "restrictions": [
-        "no_code_implementation",
-        "no_test_execution", 
-        "no_deployment"
-      ]
-    },
-    "builder": {
-      "workingDir": "./git-worktrees/builder",
-      "allowedServers": [
-        "filesystem",
-        "vector-search",
-        "knowledge-base", 
-        "git-ops",
-        "testing-tools",
-        "coordination-hub",
-        "github"
-      ],
-      "restrictions": [
-        "no_production_deployment",
-        "no_security_critical_modifications"
-      ]
-    },
-    "validator": {
-      "workingDir": "./git-worktrees/validator", 
-      "allowedServers": [
-        "filesystem",
-        "testing-tools",
-        "puppeteer",
-        "fetch",
-        "coordination-hub",
-        "github"
-      ],
-      "restrictions": [
-        "read_only_filesystem",
-        "no_code_modification"
-      ]
-    }
-  },
-  "debugging": {
-    "logLevel": "info",
-    "enableMCPDebug": false,
-    "healthCheckInterval": 30000,
-    "timeoutMs": 10000
-  },
-  "monitoring": {
-    "metricsEnabled": true,
-    "nodeMetricsPort": 9100,
-    "pythonMetricsPort": 9200,
-    "healthEndpoints": {
-      "qdrant": "http://localhost:6333/health",
-      "redis": "http://localhost:6379/ping",
-      "prometheus": "http://localhost:9090/-/healthy",
-      "grafana": "http://localhost:3000/api/health"
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "description": "In-memory storage for agent communication"
     }
   }
 }
