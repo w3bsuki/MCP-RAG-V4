@@ -6,6 +6,7 @@ Implements document-aware chunking, hybrid search, and cross-encoder reranking
 import asyncio
 import hashlib
 import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
@@ -28,6 +29,13 @@ from rank_bm25 import BM25Okapi
 import sys
 sys.path.append('../mcp-servers/')
 from logging_config import setup_logging, log_async_errors
+
+# Import metrics
+from metrics import (
+    track_search_metrics, track_ingestion_metrics, 
+    track_embedding_time, track_reranking_time,
+    update_system_metrics, set_system_info
+)
 
 
 @dataclass
@@ -91,9 +99,10 @@ class EnhancedRAGSystem:
         self.embedder = SentenceTransformer(
             config.get('embedding_model', 'sentence-transformers/all-mpnet-base-v2')
         )
-        self.reranker = CrossEncoder(
-            config.get('reranking_model', 'cross-encoder/ms-marco-MiniLM-L-6-v2')
-        )
+        # Initialize cross-encoder for reranking
+        reranking_model = config.get('reranking_model', 'cross-encoder/ms-marco-MiniLM-L-6-v2')
+        self.reranker = CrossEncoder(reranking_model)
+        self.logger.info(f"Initialized cross-encoder: {reranking_model}")
         
         # Initialize Qdrant client
         self.qdrant = QdrantClient(
@@ -148,13 +157,52 @@ class EnhancedRAGSystem:
         
         # Build BM25 index
         self._build_bm25_index()
+        
+        # Start knowledge watcher if enabled
+        if os.getenv('ENABLE_DYNAMIC_INGESTION', 'false').lower() == 'true':
+            await self._start_knowledge_watcher()
+        
+        # Set system info metrics
+        set_system_info(
+            embedding_model=self.config.get('embedding_model', 'sentence-transformers/all-mpnet-base-v2'),
+            collection_name=self.collection_name,
+            chunk_size=self.chunk_size
+        )
+        
+        # Update system metrics
+        update_system_metrics(
+            documents_count=len(self.documents),
+            chunks_count=len(self.chunks)
+        )
+    
+    async def _start_knowledge_watcher(self):
+        """Start the knowledge watcher for dynamic ingestion"""
+        from knowledge_watcher import KnowledgeWatcher
+        
+        watch_paths = [
+            os.getenv('KNOWLEDGE_ROOT', './knowledge'),
+            './docs',
+            './shared/specifications'
+        ]
+        
+        self.knowledge_watcher = KnowledgeWatcher(self, watch_paths)
+        
+        # Scan existing files on startup
+        await self.knowledge_watcher.scan_existing()
+        
+        # Start watching for changes
+        self.knowledge_watcher.start()
+        
+        self.logger.info("Knowledge watcher started")
     
     @log_async_errors(logging.getLogger())
+    @track_ingestion_metrics('document-aware')  # Will be overridden by actual strategy
     async def ingest_document(
         self, 
         content: str, 
         metadata: Dict[str, Any],
-        chunking_strategy: str = "document-aware"
+        chunking_strategy: str = "document-aware",
+        document_id: Optional[str] = None
     ) -> Document:
         """
         Ingest document with intelligent chunking
@@ -439,6 +487,7 @@ class EnhancedRAGSystem:
         
         return chunks
     
+    @track_embedding_time
     async def _embed_chunks(self, chunks: List[DocumentChunk]):
         """Generate embeddings for chunks"""
         texts = [chunk.content for chunk in chunks]
@@ -497,6 +546,7 @@ class EnhancedRAGSystem:
         self.bm25_chunk_ids = chunk_ids
     
     @log_async_errors(logging.getLogger())
+    @track_search_metrics('hybrid')
     async def hybrid_search(
         self,
         query: str,
@@ -649,40 +699,69 @@ class EnhancedRAGSystem:
         
         return sorted_results
     
+    @track_reranking_time
     async def _rerank_results(
         self,
         query: str,
         results: List[SearchResult]
     ) -> List[SearchResult]:
-        """Rerank results using cross-encoder"""
+        """
+        Rerank results using cross-encoder for improved relevance
+        The cross-encoder directly models the relevance between query and document
+        """
         if not results:
             return results
+        
+        start_time = asyncio.get_event_loop().time()
         
         # Prepare pairs for reranking
         pairs = [(query, result.chunk.content) for result in results]
         
-        # Get reranking scores
-        rerank_scores = self.reranker.predict(pairs)
-        
-        # Update results with rerank scores
-        for result, rerank_score in zip(results, rerank_scores):
-            result.rerank_score = float(rerank_score)
+        # Get reranking scores from cross-encoder
+        # This uses the full transformer architecture to compute relevance
+        try:
+            rerank_scores = self.reranker.predict(pairs)
             
-            # Combine all scores for final ranking
-            result.final_score = (
-                0.4 * result.vector_score +
-                0.2 * result.keyword_score +
-                0.4 * result.rerank_score
+            # Normalize scores to 0-1 range
+            min_score = min(rerank_scores) if rerank_scores else 0
+            max_score = max(rerank_scores) if rerank_scores else 1
+            score_range = max_score - min_score if max_score != min_score else 1
+            
+            # Update results with normalized rerank scores
+            for result, rerank_score in zip(results, rerank_scores):
+                # Normalize score
+                normalized_score = (rerank_score - min_score) / score_range
+                result.rerank_score = float(normalized_score)
+                
+                # Combine all scores for final ranking
+                # Weights: 40% vector, 20% keyword, 40% cross-encoder
+                result.final_score = (
+                    0.4 * result.vector_score +
+                    0.2 * result.keyword_score +
+                    0.4 * result.rerank_score
+                )
+            
+            # Sort by final score
+            sorted_results = sorted(
+                results,
+                key=lambda r: r.final_score,
+                reverse=True
             )
-        
-        # Sort by final score
-        sorted_results = sorted(
-            results,
-            key=lambda r: r.final_score,
-            reverse=True
-        )
-        
-        return sorted_results
+            
+            # Log performance
+            elapsed = asyncio.get_event_loop().time() - start_time
+            self.performance_logger.info(f"Cross-encoder reranking completed", extra={
+                'duration_ms': elapsed * 1000,
+                'num_results': len(results),
+                'query_length': len(query)
+            })
+            
+            return sorted_results
+            
+        except Exception as e:
+            self.logger.error(f"Cross-encoder reranking failed: {e}")
+            # Fall back to original scores without reranking
+            return results
     
     async def _load_existing_documents(self):
         """Load existing documents from vector store"""

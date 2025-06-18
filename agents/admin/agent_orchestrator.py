@@ -12,12 +12,20 @@ from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from pathlib import Path
 import logging
+import os
+from dotenv import load_dotenv
 
 # Import security and logging
 import sys
 sys.path.append('../../mcp-servers/')
 from logging_config import setup_logging, log_async_errors
 from validation_schemas import StringValidation
+
+# Import task queue
+from task_queue import task_queue
+
+# Load environment variables
+load_dotenv()
 
 
 # Agent roles and types
@@ -118,6 +126,9 @@ class AdminAgent:
     - Agent coordination and conflict resolution
     - Resource management
     - Progress monitoring
+    
+    Uses Haiku for quick routing decisions (10x cheaper)
+    Uses Opus/Sonnet for complex orchestration
     """
     
     def __init__(self, config: Dict[str, Any]):
@@ -142,6 +153,14 @@ class AdminAgent:
             AgentRole.VALIDATOR: ["code_review", "security_check", "quality_assurance"]
         }
         
+        # Initialize routing models
+        self.use_haiku_routing = os.getenv('ENABLE_HAIKU_ROUTING', 'true').lower() == 'true'
+        self.haiku_model = os.getenv('ADMIN_ROUTING_MODEL', 'claude-3-haiku-20240307')
+        self.opus_model = os.getenv('ADMIN_ORCHESTRATION_MODEL', 'claude-3-opus-20240229')
+        
+        if self.use_haiku_routing:
+            self.logger.info(f"Haiku routing enabled: {self.haiku_model}")
+        
         self.logger.info("Admin Agent initialized", extra={'config': config})
     
     def register_agent(self, role: AgentRole, agent: 'BaseAgent'):
@@ -162,13 +181,26 @@ class AdminAgent:
             result="accepted"
         )
         
-        # Queue for processing
+        # Submit to Redis queue if enabled
+        task_data = {
+            'id': task.id,
+            'name': task.name,
+            'description': task.description,
+            'status': task.status.value,
+            'dependencies': task.dependencies,
+            'metadata': task.metadata
+        }
+        await task_queue.submit_task(task_data)
+        
+        # Also queue locally for processing
         await self.message_queue.put(AgentMessage(
             from_agent=AgentRole.ADMIN,
             to_agent=AgentRole.ADMIN,
             message_type=MessageType.PLAN_REQUEST,
             payload={'task_id': task.id}
         ))
+        
+        self.logger.info(f"Task submitted: {task.id}", extra={'queue': 'redis' if task_queue.use_redis else 'memory'})
         
         return task.id
     
@@ -177,37 +209,128 @@ class AdminAgent:
         """
         Plan phase: Determine which agent should handle the task
         and create an execution plan
+        
+        Uses Haiku for simple routing, Opus/Sonnet for complex orchestration
         """
         self.logger.info(f"Planning task: {task.name}", extra={'task_id': task.id})
         task.status = TaskStatus.PLANNING
         
-        # Analyze task requirements
-        best_agent = await self._select_best_agent(task)
+        # Determine if complex orchestration is needed
+        needs_orchestration = await self._needs_complex_orchestration(task)
         
-        # Create execution plan
-        plan = {
-            'agent': best_agent.value,
-            'steps': await self._generate_execution_steps(task, best_agent),
-            'estimated_duration': await self._estimate_duration(task, best_agent),
-            'resources_required': await self._identify_resources(task),
-            'dependencies': task.dependencies,
-            'priority': self._calculate_priority(task)
-        }
-        
-        task.plan = plan
-        task.assigned_to = best_agent
+        if needs_orchestration:
+            # Use Opus/Sonnet for complex planning
+            plan = await self._complex_orchestration(task)
+            self.logger.info(f"Complex orchestration used for task: {task.name}")
+        else:
+            # Use Haiku for simple routing
+            best_agent = await self._select_best_agent(task)
+            
+            # Create simple execution plan
+            plan = {
+                'agent': best_agent.value,
+                'steps': await self._generate_execution_steps(task, best_agent),
+                'estimated_duration': await self._estimate_duration(task, best_agent),
+                'resources_required': await self._identify_resources(task),
+                'dependencies': task.dependencies,
+                'priority': self._calculate_priority(task)
+            }
+            
+            task.plan = plan
+            task.assigned_to = best_agent
         
         self.logger.info(f"Task planned: {task.name}", extra={
             'task_id': task.id,
-            'assigned_to': best_agent.value,
-            'steps': len(plan['steps'])
+            'assigned_to': task.plan.get('agent', 'multiple'),
+            'steps': len(plan.get('steps', [])),
+            'used_orchestration': needs_orchestration
         })
         
         return plan
     
+    async def _needs_complex_orchestration(self, task: AgentTask) -> bool:
+        """
+        Determine if task requires complex orchestration (Opus/Sonnet)
+        vs simple routing (Haiku)
+        """
+        # Complex orchestration needed for:
+        # 1. Tasks with dependencies
+        if task.dependencies:
+            return True
+        
+        # 2. Multi-agent coordination
+        if 'multi-agent' in task.description.lower() or 'coordinate' in task.description.lower():
+            return True
+        
+        # 3. High complexity tasks
+        if any(word in task.description.lower() for word in ['complex', 'architecture', 'system design']):
+            return True
+        
+        # 4. Resource conflicts
+        if task.metadata.get('exclusive_resource'):
+            return True
+        
+        # Simple routing is sufficient
+        return False
+    
+    async def _complex_orchestration(self, task: AgentTask) -> Dict[str, Any]:
+        """
+        Use Opus/Sonnet for complex multi-agent orchestration
+        This would call Anthropic API with Opus model in production
+        """
+        # In production:
+        # response = await anthropic_client.messages.create(
+        #     model=self.opus_model,
+        #     max_tokens=1000,
+        #     messages=[{"role": "user", "content": orchestration_prompt}]
+        # )
+        
+        # Simulated complex plan
+        return {
+            'agent': 'multiple',
+            'orchestration_type': 'complex',
+            'phases': [
+                {'agent': AgentRole.FRONTEND.value, 'phase': 'design'},
+                {'agent': AgentRole.BACKEND.value, 'phase': 'implementation'},
+                {'agent': AgentRole.VALIDATOR.value, 'phase': 'validation'}
+            ],
+            'steps': [
+                {'step': 'Design phase', 'agent': AgentRole.FRONTEND.value},
+                {'step': 'Implementation phase', 'agent': AgentRole.BACKEND.value},
+                {'step': 'Validation phase', 'agent': AgentRole.VALIDATOR.value}
+            ],
+            'estimated_duration': 3600,
+            'resources_required': ['database', 'api_endpoint'],
+            'dependencies': task.dependencies,
+            'priority': 'high'
+        }
+    
     async def _select_best_agent(self, task: AgentTask) -> AgentRole:
-        """Select the most suitable agent for a task"""
-        # Simple capability matching for now
+        """
+        Select the most suitable agent for a task
+        Uses Haiku for quick routing decisions if enabled
+        """
+        start_time = asyncio.get_event_loop().time()
+        
+        if self.use_haiku_routing:
+            try:
+                # Use Haiku for quick routing (simulated for now)
+                best_agent = await self._haiku_route_task(task)
+                
+                elapsed = asyncio.get_event_loop().time() - start_time
+                self.performance_logger.info("Haiku routing completed", extra={
+                    'duration_ms': elapsed * 1000,
+                    'task_id': task.id,
+                    'selected_agent': best_agent.value,
+                    'model': self.haiku_model
+                })
+                
+                return best_agent
+                
+            except Exception as e:
+                self.logger.warning(f"Haiku routing failed, falling back: {e}")
+        
+        # Fallback to simple capability matching
         task_keywords = task.description.lower().split()
         
         scores = {}
@@ -219,6 +342,34 @@ class AdminAgent:
         # Return agent with highest score
         best_agent = max(scores, key=scores.get)
         return best_agent
+    
+    async def _haiku_route_task(self, task: AgentTask) -> AgentRole:
+        """
+        Use Haiku model for quick task routing
+        This would call Anthropic API in production
+        """
+        # Simulate Haiku routing based on task keywords
+        # In production, this would be:
+        # response = await anthropic_client.messages.create(
+        #     model=self.haiku_model,
+        #     max_tokens=50,
+        #     messages=[{"role": "user", "content": routing_prompt}]
+        # )
+        
+        task_lower = task.description.lower()
+        
+        # Quick pattern matching (simulating Haiku's decision)
+        if any(word in task_lower for word in ['design', 'architecture', 'specification', 'plan']):
+            return AgentRole.FRONTEND  # Using FRONTEND as proxy for ARCHITECT
+        elif any(word in task_lower for word in ['implement', 'code', 'api', 'database', 'backend']):
+            return AgentRole.BACKEND  # Using BACKEND as proxy for BUILDER
+        elif any(word in task_lower for word in ['test', 'validate', 'security', 'audit', 'check']):
+            return AgentRole.VALIDATOR
+        elif any(word in task_lower for word in ['search', 'rag', 'document', 'knowledge', 'embedding']):
+            return AgentRole.RAG
+        else:
+            # Default to backend for general tasks
+            return AgentRole.BACKEND
     
     async def _generate_execution_steps(self, task: AgentTask, agent: AgentRole) -> List[Dict[str, Any]]:
         """Generate execution steps based on task and agent"""

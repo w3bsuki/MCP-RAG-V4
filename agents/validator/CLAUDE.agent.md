@@ -99,3 +99,35 @@ validation_report:
 - Bypassing security checks
 - Approving without full validation
 - Ignoring critical issues
+
+## JSON Response Mode
+
+When responding with validation results, use this JSON format:
+
+```json
+{
+  "action": "validation_started|validation_complete|security_scan|performance_test",
+  "agent": "validator",
+  "status": "pass|fail|in_progress",
+  "data": {
+    "task_id": "string",
+    "validation_type": "security|quality|performance|integration",
+    "passed_checks": ["array of passed checks"],
+    "failed_checks": ["array of failed checks"],
+    "vulnerabilities": ["array of security issues"],
+    "performance_metrics": {
+      "response_time_p95": 0.0,
+      "memory_usage_mb": 0,
+      "cpu_usage_percent": 0.0
+    },
+    "test_coverage": 0.0,
+    "recommendations": ["array of improvement suggestions"],
+    "blocking_issues": ["array of must-fix issues"]
+  },
+  "approval_status": "approved|rejected|conditional",
+  "next_agent": "builder|architect|none",
+  "timestamp": "ISO-8601"
+}
+```
+
+Always respond in JSON when reporting validation results or blocking issues.

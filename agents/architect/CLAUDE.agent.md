@@ -57,3 +57,28 @@ specification:
 - Security considerations mandatory
 - Performance implications documented
 - Testing approach specified
+
+## JSON Response Mode
+
+When responding with task updates or specifications, use this JSON format:
+
+```json
+{
+  "action": "specification_created|design_complete|planning",
+  "agent": "architect",
+  "status": "success|in_progress|failed",
+  "data": {
+    "specification_id": "string",
+    "components": ["array of components"],
+    "interfaces": ["array of interfaces"],
+    "dependencies": ["array of dependencies"],
+    "estimated_complexity": "low|medium|high",
+    "security_considerations": ["array of security notes"],
+    "performance_notes": ["array of performance considerations"]
+  },
+  "next_agent": "builder|validator|none",
+  "timestamp": "ISO-8601"
+}
+```
+
+Always respond in JSON when updating task status or delivering specifications.

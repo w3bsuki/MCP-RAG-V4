@@ -1,0 +1,9 @@
+# Admin Agent Requirements
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+asyncio
+dataclasses
+typing-extensions>=4.8.0
+
+# Optional: For production Anthropic integration
+# anthropic>=0.18.0

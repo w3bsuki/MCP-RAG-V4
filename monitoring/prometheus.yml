@@ -53,3 +53,28 @@ scrape_configs:
       - targets: ['redis:6379']
     metrics_path: '/metrics'
     scrape_interval: 30s
+
+  # RAG System Metrics
+  - job_name: 'rag-system'
+    static_configs:
+      - targets: ['localhost:8006']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'rag_.*'
+        action: keep
+
+  # Admin Agent Service
+  - job_name: 'admin-agent'
+    static_configs:
+      - targets: ['admin-agent:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Dashboard API
+  - job_name: 'dashboard-api'
+    static_configs:
+      - targets: ['dashboard:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s

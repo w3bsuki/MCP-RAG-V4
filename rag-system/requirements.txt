@@ -3,3 +3,9 @@ sentence-transformers>=2.2.0
 redis>=4.5.0
 numpy
 torch
+tiktoken>=0.5.0
+spacy>=3.7.0
+rank-bm25>=0.2.2
+watchdog>=3.0.0
+prometheus-client>=0.19.0
+python-dotenv>=1.0.0
