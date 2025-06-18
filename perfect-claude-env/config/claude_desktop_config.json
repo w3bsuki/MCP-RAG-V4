@@ -1,0 +1,41 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env"],
+      "description": "Official filesystem server with path whitelisting"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-puppeteer"],
+      "description": "Browser automation and screenshots"
+    },
+    "fetch": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-fetch"],
+      "description": "HTTP requests and API testing"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "description": "GitHub API integration"
+    },
+    "knowledge-base": {
+      "command": "python",
+      "args": ["/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/mcp-servers/knowledge-base-python/server.py"],
+      "env": {
+        "KNOWLEDGE_ROOT": "/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/rag-system/knowledge"
+      },
+      "description": "Knowledge storage and pattern extraction"
+    },
+    "vector-search": {
+      "command": "python",
+      "args": ["/home/w3bsuki/MCP-RAG-V4/perfect-claude-env/mcp-servers/vector-search-python/server.py"],
+      "env": {
+        "QDRANT_URL": "http://localhost:6333",
+        "COLLECTION_NAME": "mcp_knowledge"
+      },
+      "description": "Semantic search with Qdrant"
+    }
+  }
+}

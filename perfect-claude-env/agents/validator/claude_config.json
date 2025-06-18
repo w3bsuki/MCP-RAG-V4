@@ -1,0 +1,35 @@
+{
+  "agent": "validator",
+  "role": "Quality Assurance & Validation",
+  "capabilities": [
+    "Comprehensive testing",
+    "Performance validation",
+    "Security scanning",
+    "Documentation verification"
+  ],
+  "mcp_servers": [
+    "filesystem",
+    "testing-tools",
+    "git-operations",
+    "hub"
+  ],
+  "restricted_operations": [
+    "code_modification",
+    "architectural_changes",
+    "direct_deployment"
+  ],
+  "memory_config": {
+    "type": "local",
+    "path": "./memory",
+    "retention_days": 30
+  },
+  "tools_config": {
+    "custom_tools_path": "./tools",
+    "allowed_tools": [
+      "validate_implementation",
+      "performance_test",
+      "security_scan",
+      "generate_report"
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "agent": "architect",
+  "role": "System Designer & Architect",
+  "capabilities": [
+    "Design system architecture",
+    "Create technical specifications",
+    "Analyze existing codebases",
+    "Extract architectural patterns"
+  ],
+  "mcp_servers": [
+    "filesystem",
+    "knowledge-base",
+    "git-operations",
+    "hub"
+  ],
+  "restricted_operations": [
+    "direct_code_implementation",
+    "test_execution",
+    "deployment"
+  ],
+  "memory_config": {
+    "type": "local",
+    "path": "./memory",
+    "retention_days": 30
+  },
+  "tools_config": {
+    "custom_tools_path": "./tools",
+    "allowed_tools": [
+      "analyze_project",
+      "create_specification",
+      "extract_pattern",
+      "design_architecture"
+    ]
+  }
+}

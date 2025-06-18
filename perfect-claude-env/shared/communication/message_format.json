@@ -1,0 +1,17 @@
+{
+  "message_id": "MSG-001",
+  "from": "architect",
+  "to": ["builder", "validator"],
+  "type": "design_complete",
+  "subject": "Authentication System Design",
+  "content": {
+    "summary": "Design for OAuth2 authentication completed",
+    "details": "See knowledge-base entry: pattern_auth_001",
+    "actions_required": [
+      "builder: Implement based on spec",
+      "validator: Prepare test scenarios"
+    ]
+  },
+  "timestamp": "2024-01-01T00:00:00Z",
+  "priority": "high"
+}

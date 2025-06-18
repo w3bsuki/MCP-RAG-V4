@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "agent-coordination": {
+      "command": "npx",
+      "args": ["tsx", "/home/w3bsuki/MCP-RAG-V4/.mcp/server.ts"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

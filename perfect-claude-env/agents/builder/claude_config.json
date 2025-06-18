@@ -1,0 +1,35 @@
+{
+  "agent": "builder",
+  "role": "Implementation Specialist",
+  "capabilities": [
+    "Implement code from specifications",
+    "Run tests and validate code",
+    "Manage dependencies",
+    "Create build configurations"
+  ],
+  "mcp_servers": [
+    "filesystem",
+    "testing-tools",
+    "git-operations",
+    "knowledge-base",
+    "hub"
+  ],
+  "restricted_operations": [
+    "architectural_decisions",
+    "deployment_to_production"
+  ],
+  "memory_config": {
+    "type": "local",
+    "path": "./memory",
+    "retention_days": 30
+  },
+  "tools_config": {
+    "custom_tools_path": "./tools",
+    "allowed_tools": [
+      "implement_feature",
+      "run_tests",
+      "build_project",
+      "manage_dependencies"
+    ]
+  }
+}
