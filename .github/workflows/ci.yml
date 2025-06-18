@@ -63,10 +63,13 @@ jobs:
                 sys.exit(1)
         "
 
-    - name: Run integration tests
+    - name: Install test dependencies
       run: |
-        cd perfect-claude-env
-        python tests/test_mcp_integration.py
+        pip install -r tests/requirements.txt
+
+    - name: Run comprehensive integration tests
+      run: |
+        python -m pytest tests/test_comprehensive_integration.py -v --tb=short
 
   build-and-push:
     needs: lint-and-test
@@ -145,6 +148,22 @@ jobs:
         
         # Test Grafana
         curl -f http://localhost:3000/api/health || exit 1
+        
+        # Test MCP Server metrics endpoints
+        curl -f http://localhost:9100/metrics || exit 1
+        curl -f http://localhost:9200/metrics || exit 1
+        
+        # Test MCP Server health endpoints
+        curl -f http://localhost:9100/health || exit 1
+        curl -f http://localhost:9200/health || exit 1
+
+    - name: Run end-to-end integration tests
+      run: |
+        # Install test dependencies
+        pip install -r tests/requirements.txt
+        
+        # Run full integration test suite against running stack
+        python -m pytest tests/test_comprehensive_integration.py::TestFullStackIntegration -v
 
     - name: Generate coverage report
       run: |

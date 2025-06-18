@@ -1,0 +1,166 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem", "--root", "./projects", "--root", "./shared"],
+      "description": "Secure filesystem operations with path whitelisting",
+      "allowedPaths": [
+        "./projects",
+        "./shared", 
+        "./.worktrees",
+        "./perfect-claude-env/shared"
+      ]
+    },
+    "vector-search": {
+      "command": "python",
+      "args": ["perfect-claude-env/mcp-servers/vector-search-python/server.py"],
+      "env": {
+        "QDRANT_URL": "http://localhost:6333",
+        "REDIS_URL": "redis://localhost:6379",
+        "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
+        "MCP_SERVER_PORT": "8081"
+      },
+      "description": "Semantic search with Qdrant and Redis caching"
+    },
+    "knowledge-base": {
+      "command": "python", 
+      "args": ["perfect-claude-env/mcp-servers/knowledge-base-python/server.py"],
+      "env": {
+        "KNOWLEDGE_ROOT": "./perfect-claude-env/rag-system/knowledge",
+        "MCP_SERVER_PORT": "8080"
+      },
+      "description": "Knowledge storage and pattern extraction"
+    },
+    "git-ops": {
+      "command": "python",
+      "args": ["perfect-claude-env/mcp-servers/security-wrapper/filesystem-secure.py", "--confirm"],
+      "env": {
+        "SECURITY_CONFIG": "./perfect-claude-env/config/security-config.json",
+        "AUDIT_LOG": "./logs/git-audit.log",
+        "MCP_SERVER_PORT": "8082"
+      },
+      "description": "Git operations with confirmation flags and audit logging"
+    },
+    "testing-tools": {
+      "command": "node",
+      "args": ["perfect-claude-env/mcp-servers/testing-tools/index.js"],
+      "env": {
+        "MCP_SERVER_PORT": "8086"
+      },
+      "description": "Testing, linting, security scanning, and validation tools"
+    },
+    "coordination-hub": {
+      "command": "python",
+      "args": ["perfect-claude-env/mcp-servers/coordination-hub/server.py"],
+      "env": {
+        "SHARED_DIR": "./perfect-claude-env/shared",
+        "MCP_SERVER_PORT": "8087"
+      },
+      "description": "Inter-agent coordination and task management"
+    },
+    "puppeteer": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-puppeteer"],
+      "description": "Browser automation and screenshots for testing"
+    },
+    "fetch": {
+      "command": "npx", 
+      "args": ["@modelcontextprotocol/server-fetch"],
+      "description": "HTTP requests and API testing"
+    },
+    "github": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub API integration for issues and PRs"
+    }
+  },
+  "permissions": {
+    "alwaysAllow": [
+      "filesystem/read_file",
+      "filesystem/list_directory", 
+      "vector-search/search",
+      "knowledge-base/search",
+      "coordination-hub/get_tasks",
+      "testing-tools/run_tests",
+      "testing-tools/lint_code"
+    ],
+    "requireConfirmation": [
+      "filesystem/write_file",
+      "filesystem/delete_file",
+      "git-ops/commit",
+      "git-ops/push", 
+      "git-ops/reset",
+      "testing-tools/security_scan",
+      "github/create_pr",
+      "github/merge_pr"
+    ]
+  },
+  "agents": {
+    "architect": {
+      "workingDir": "./.worktrees/architect-branch",
+      "allowedServers": [
+        "filesystem",
+        "vector-search", 
+        "knowledge-base",
+        "coordination-hub",
+        "github"
+      ],
+      "restrictions": [
+        "no_code_implementation",
+        "no_test_execution", 
+        "no_deployment"
+      ]
+    },
+    "builder": {
+      "workingDir": "./.worktrees/builder-branch",
+      "allowedServers": [
+        "filesystem",
+        "vector-search",
+        "knowledge-base", 
+        "git-ops",
+        "testing-tools",
+        "coordination-hub",
+        "github"
+      ],
+      "restrictions": [
+        "no_production_deployment",
+        "no_security_critical_modifications"
+      ]
+    },
+    "validator": {
+      "workingDir": "./.worktrees/validator-branch", 
+      "allowedServers": [
+        "filesystem",
+        "testing-tools",
+        "puppeteer",
+        "fetch",
+        "coordination-hub",
+        "github"
+      ],
+      "restrictions": [
+        "read_only_filesystem",
+        "no_code_modification"
+      ]
+    }
+  },
+  "debugging": {
+    "logLevel": "info",
+    "enableMCPDebug": false,
+    "healthCheckInterval": 30000,
+    "timeoutMs": 10000
+  },
+  "monitoring": {
+    "metricsEnabled": true,
+    "nodeMetricsPort": 9100,
+    "pythonMetricsPort": 9200,
+    "healthEndpoints": {
+      "qdrant": "http://localhost:6333/health",
+      "redis": "http://localhost:6379/ping",
+      "prometheus": "http://localhost:9090/-/healthy",
+      "grafana": "http://localhost:3000/api/health"
+    }
+  }
+}

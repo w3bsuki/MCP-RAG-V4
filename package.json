@@ -1,0 +1,51 @@
+{
+  "name": "mcp-rag-v4",
+  "version": "1.0.0",
+  "description": "Perfect Claude-Code Environment with Multi-Agent MCP-RAG System",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "bootstrap": "./scripts/bootstrap.sh",
+    "mcp:start:all": "./scripts/start-node-servers.sh",
+    "mcp:stop:all": "./scripts/stop-node-servers.sh",
+    "python:start:all": "python start_all.py",
+    "python:stop:all": "python stop_all.py",
+    "stack:up": "docker-compose -f perfect-claude-env/docker-compose.yml up -d",
+    "stack:down": "docker-compose -f perfect-claude-env/docker-compose.yml down",
+    "stack:logs": "docker-compose -f perfect-claude-env/docker-compose.yml logs -f",
+    "stack:status": "docker-compose -f perfect-claude-env/docker-compose.yml ps",
+    "dev": "concurrently \"npm run stack:up\" \"npm run mcp:start:all\" \"npm run python:start:all\"",
+    "stop": "concurrently \"npm run mcp:stop:all\" \"npm run python:stop:all\" \"npm run stack:down\"",
+    "test": "python -m pytest tests/ -v",
+    "test:integration": "python tests/test_mcp_integration.py",
+    "lint": "echo 'Running linters...' && npm run lint:node && npm run lint:python",
+    "lint:node": "find perfect-claude-env/mcp-servers -name '*.js' -not -path '*/node_modules/*' | xargs eslint",
+    "lint:python": "find perfect-claude-env/mcp-servers -name '*.py' | xargs flake8",
+    "format": "npm run format:node && npm run format:python",
+    "format:node": "find perfect-claude-env/mcp-servers -name '*.js' -not -path '*/node_modules/*' | xargs prettier --write",
+    "format:python": "find perfect-claude-env/mcp-servers -name '*.py' | xargs black",
+    "security:scan": "trivy fs --severity HIGH,CRITICAL .",
+    "rag:ingest": "make rag-ingest",
+    "rag:reindex": "make rag-reindex"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0"
+  },
+  "keywords": [
+    "mcp",
+    "rag",
+    "claude",
+    "ai",
+    "multi-agent"
+  ],
+  "author": "MCP-RAG-V4 Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "python": ">=3.9.0"
+  }
+}

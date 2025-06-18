@@ -3,6 +3,61 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { spawn } from 'child_process';
 import { promises as fs } from 'fs';
 import path from 'path';
+import express from 'express';
+import promClient from 'prom-client';
+
+// Initialize Prometheus metrics
+const register = new promClient.Registry();
+promClient.collectDefaultMetrics({ register });
+
+// Custom metrics
+const toolCallsTotal = new promClient.Counter({
+  name: 'mcp_tool_calls_total',
+  help: 'Total number of MCP tool calls',
+  labelNames: ['tool_name', 'status'],
+  registers: [register]
+});
+
+const toolCallDuration = new promClient.Histogram({
+  name: 'mcp_tool_call_duration_seconds',
+  help: 'Duration of MCP tool calls in seconds',
+  labelNames: ['tool_name'],
+  buckets: [0.1, 0.5, 1, 5, 10, 30],
+  registers: [register]
+});
+
+const serverUptime = new promClient.Gauge({
+  name: 'mcp_server_uptime_seconds',
+  help: 'Server uptime in seconds',
+  registers: [register]
+});
+
+const startTime = Date.now();
+setInterval(() => {
+  serverUptime.set((Date.now() - startTime) / 1000);
+}, 5000);
+
+// Initialize HTTP server for metrics
+const app = express();
+const metricsPort = process.env.NODE_METRICS_PORT || 9100;
+
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    server: 'testing-tools-server',
+    uptime: (Date.now() - startTime) / 1000,
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.listen(metricsPort, () => {
+  console.error(`Metrics server listening on port ${metricsPort}`);
+});
 
 const server = new Server({
   name: 'testing-tools-server',
@@ -43,13 +98,31 @@ function executeCommand(command, args = [], cwd = process.cwd()) {
   });
 }
 
+// Metrics wrapper for tool calls
+async function withMetrics(toolName, handler) {
+  const startTime = Date.now();
+  try {
+    const result = await handler();
+    const duration = (Date.now() - startTime) / 1000;
+    toolCallsTotal.labels(toolName, 'success').inc();
+    toolCallDuration.labels(toolName).observe(duration);
+    return result;
+  } catch (error) {
+    const duration = (Date.now() - startTime) / 1000;
+    toolCallsTotal.labels(toolName, 'error').inc();
+    toolCallDuration.labels(toolName).observe(duration);
+    throw error;
+  }
+}
+
 // Testing tools handler
 server.setRequestHandler('tools/call', async (request) => {
-  if (request.params.name === 'run_tests') {
-    const { directory, command = 'npm test', pattern } = request.params.arguments;
-    try {
-      const testCommand = pattern ? `${command} -- ${pattern}` : command;
-      const result = await executeCommand(testCommand, [], directory);
+  return await withMetrics(request.params.name, async () => {
+    if (request.params.name === 'run_tests') {
+      const { directory, command = 'npm test', pattern } = request.params.arguments;
+      try {
+        const testCommand = pattern ? `${command} -- ${pattern}` : command;
+        const result = await executeCommand(testCommand, [], directory);
       
       return {
         content: [{
@@ -230,7 +303,8 @@ console.log(\`Execution time: \${(end - start) / 1000000n}ms\`);
     }
   }
 
-  throw new Error(`Unknown tool: ${request.params.name}`);
+    throw new Error(`Unknown tool: ${request.params.name}`);
+  });
 });
 
 // List available tools

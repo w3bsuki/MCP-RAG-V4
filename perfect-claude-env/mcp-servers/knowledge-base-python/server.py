@@ -5,6 +5,9 @@ Handles markdown docs, patterns, and knowledge retrieval
 """
 import json
 import os
+import asyncio
+import threading
+import time
 from pathlib import Path
 from typing import Dict, List, Any
 import hashlib
@@ -13,6 +16,46 @@ from datetime import datetime
 from mcp import Server
 from mcp.types import Tool, Resource, TextContent, ErrorData
 import mcp.server.stdio
+
+# Prometheus metrics
+from prometheus_client import Counter, Histogram, Gauge, start_http_server, CollectorRegistry, generate_latest
+from fastapi import FastAPI
+from fastapi.responses import Response
+import uvicorn
+
+# Initialize metrics
+registry = CollectorRegistry()
+tool_calls_total = Counter('mcp_tool_calls_total', 'Total MCP tool calls', ['tool_name', 'status'], registry=registry)
+tool_call_duration = Histogram('mcp_tool_call_duration_seconds', 'MCP tool call duration', ['tool_name'], registry=registry)
+server_uptime = Gauge('mcp_server_uptime_seconds', 'Server uptime in seconds', registry=registry)
+knowledge_items_total = Gauge('mcp_knowledge_items_total', 'Total knowledge items stored', registry=registry)
+
+start_time = time.time()
+
+# Metrics HTTP server
+app = FastAPI()
+
+@app.get("/metrics")
+async def metrics():
+    server_uptime.set(time.time() - start_time)
+    return Response(generate_latest(registry), media_type="text/plain")
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "healthy",
+        "server": "knowledge-base-server",
+        "uptime": time.time() - start_time,
+        "timestamp": datetime.now().isoformat()
+    }
+
+def start_metrics_server():
+    metrics_port = int(os.environ.get("PYTHON_METRICS_PORT", "9200"))
+    uvicorn.run(app, host="0.0.0.0", port=metrics_port, log_level="warning")
+
+# Start metrics server in background thread
+metrics_thread = threading.Thread(target=start_metrics_server, daemon=True)
+metrics_thread.start()
 
 # Initialize server
 server = Server("knowledge-base")
@@ -76,9 +119,31 @@ async def list_tools() -> List[Tool]:
         )
     ]
 
+# Metrics decorator for tool calls
+def with_metrics(tool_name):
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = await func(*args, **kwargs)
+                duration = time.time() - start_time
+                tool_calls_total.labels(tool_name=tool_name, status='success').inc()
+                tool_call_duration.labels(tool_name=tool_name).observe(duration)
+                return result
+            except Exception as e:
+                duration = time.time() - start_time
+                tool_calls_total.labels(tool_name=tool_name, status='error').inc()
+                tool_call_duration.labels(tool_name=tool_name).observe(duration)
+                raise e
+        return wrapper
+    return decorator
+
 @server.call_tool()
 async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
-    try:
+    # Wrap with metrics
+    @with_metrics(name)
+    async def handle_tool_call():
+        try:
         if name == "store_knowledge":
             return await store_knowledge(arguments)
         elif name == "search_knowledge":
@@ -89,8 +154,11 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             return await extract_patterns(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
-    except Exception as e:
-        return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
+        except Exception as e:
+            return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
+    
+    # Execute the wrapped function
+    return await handle_tool_call()
 
 async def store_knowledge(args: Dict[str, Any]) -> List[TextContent]:
     """Store a knowledge item"""
