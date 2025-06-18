@@ -1,8 +1,38 @@
 {
-  "tasks": [],
+  "tasks": [
+    {
+      "id": "task-60cf1bd5",
+      "type": "create_specification",
+      "status": "pending",
+      "created_at": "2025-06-18T20:01:09.721116",
+      "requirements": {
+        "name": "User Authentication API",
+        "description": "JWT-based user authentication system",
+        "features": [
+          "login",
+          "register",
+          "logout",
+          "refresh"
+        ],
+        "tech_stack": {
+          "language": "python",
+          "framework": "fastapi"
+        }
+      }
+    }
+  ],
   "agents": {
-    "architect": {"status": "ready", "current_task": null},
-    "builder": {"status": "ready", "current_task": null},
-    "validator": {"status": "ready", "current_task": null}
+    "architect": {
+      "status": "ready",
+      "current_task": null
+    },
+    "builder": {
+      "status": "ready",
+      "current_task": null
+    },
+    "validator": {
+      "status": "ready",
+      "current_task": null
+    }
   }
 }
