@@ -5,5 +5,7 @@ numpy
 torch
 redis>=4.5.0
 hiredis>=2.0.0
-redis>=4.5.0
 transformers>=4.30.0
+prometheus-client
+fastapi
+uvicorn

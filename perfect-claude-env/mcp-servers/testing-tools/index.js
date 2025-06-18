@@ -134,6 +134,68 @@ server.setRequestHandler('tools/call', async (request) => {
     }
   }
 
+  if (request.params.name === 'security_scan') {
+    const { directory, tool = 'trivy', severity = 'HIGH,CRITICAL' } = request.params.arguments;
+    try {
+      let result;
+      if (tool === 'trivy') {
+        result = await executeCommand('trivy', ['fs', '--severity', severity, '--format', 'json', directory], directory);
+      } else if (tool === 'snyk') {
+        result = await executeCommand('snyk', ['test', '--json'], directory);
+      } else if (tool === 'npm-audit') {
+        result = await executeCommand('npm', ['audit', '--json'], directory);
+      } else {
+        throw new Error(`Unsupported security tool: ${tool}`);
+      }
+      
+      return {
+        content: [{
+          type: 'text',
+          text: `Security Scan Results (${tool}):\n${result.stdout}`,
+        }],
+      };
+    } catch (error) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Security scan failed:\n${error.stdout}\n${error.stderr}`,
+        }],
+        isError: true,
+      };
+    }
+  }
+
+  if (request.params.name === 'dependency_audit') {
+    const { directory, tool = 'npm' } = request.params.arguments;
+    try {
+      let result;
+      if (tool === 'npm') {
+        result = await executeCommand('npm', ['audit', '--json'], directory);
+      } else if (tool === 'yarn') {
+        result = await executeCommand('yarn', ['audit', '--json'], directory);
+      } else if (tool === 'pip-audit') {
+        result = await executeCommand('pip-audit', ['--format', 'json'], directory);
+      } else {
+        throw new Error(`Unsupported audit tool: ${tool}`);
+      }
+      
+      return {
+        content: [{
+          type: 'text',
+          text: `Dependency Audit Results (${tool}):\n${result.stdout}`,
+        }],
+      };
+    } catch (error) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Dependency audit failed:\n${error.stdout}\n${error.stderr}`,
+        }],
+        isError: true,
+      };
+    }
+  }
+
   if (request.params.name === 'benchmark') {
     const { directory, script } = request.params.arguments;
     try {
@@ -221,6 +283,31 @@ server.setRequestHandler('tools/list', async () => {
           properties: {
             directory: { type: 'string', description: 'Directory to validate' },
             command: { type: 'string', description: 'Type check command (default: npx tsc --noEmit)' },
+          },
+          required: ['directory'],
+        },
+      },
+      {
+        name: 'security_scan',
+        description: 'Run security vulnerability scan',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            directory: { type: 'string', description: 'Directory to scan' },
+            tool: { type: 'string', description: 'Security tool (trivy, snyk, npm-audit)', default: 'trivy' },
+            severity: { type: 'string', description: 'Severity filter (LOW,MEDIUM,HIGH,CRITICAL)', default: 'HIGH,CRITICAL' },
+          },
+          required: ['directory'],
+        },
+      },
+      {
+        name: 'dependency_audit',
+        description: 'Audit dependencies for vulnerabilities',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            directory: { type: 'string', description: 'Directory to audit' },
+            tool: { type: 'string', description: 'Audit tool (npm, yarn, pip-audit)', default: 'npm' },
           },
           required: ['directory'],
         },

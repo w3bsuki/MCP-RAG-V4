@@ -1,3 +1,6 @@
 mcp
 aiofiles
 pydantic>=2.0
+prometheus-client
+fastapi
+uvicorn

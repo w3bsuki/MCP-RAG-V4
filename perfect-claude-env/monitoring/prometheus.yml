@@ -1,0 +1,55 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # MCP Knowledge Base Server
+  - job_name: 'mcp-knowledge-base'
+    static_configs:
+      - targets: ['knowledge-base:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # MCP Vector Search Server
+  - job_name: 'mcp-vector-search'
+    static_configs:
+      - targets: ['vector-search:8081']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # MCP Filesystem Secure Server
+  - job_name: 'mcp-filesystem-secure'
+    static_configs:
+      - targets: ['filesystem-secure:8082']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # MCP Git Operations Server
+  - job_name: 'mcp-git-operations'
+    static_configs:
+      - targets: ['git-operations:8084']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Qdrant Vector Database
+  - job_name: 'qdrant'
+    static_configs:
+      - targets: ['qdrant:6333']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 30s

@@ -1,0 +1,186 @@
+name: MCP-RAG-V4 CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Set up Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort pytest
+        find perfect-claude-env/mcp-servers -name "requirements.txt" -exec pip install -r {} \;
+
+    - name: Install Node.js dependencies
+      run: |
+        find perfect-claude-env/mcp-servers -name "package.json" -path "*/node_modules" -prune -o -type f -exec npm install --prefix $(dirname {}) \;
+
+    - name: Lint Python code
+      run: |
+        flake8 perfect-claude-env/mcp-servers --count --select=E9,F63,F7,F82 --show-source --statistics
+        black --check perfect-claude-env/mcp-servers --extend-exclude="node_modules|\.git"
+        isort --check-only perfect-claude-env/mcp-servers --skip-glob="**/node_modules/**"
+
+    - name: Validate agent configurations
+      run: |
+        python -c "
+        import json
+        import sys
+        
+        agents = ['architect', 'builder', 'validator']
+        for agent in agents:
+            try:
+                with open(f'perfect-claude-env/agents/{agent}/claude_config.json', 'r') as f:
+                    config = json.load(f)
+                    assert 'agent' in config
+                    assert 'mcp_servers' in config
+                    print(f'✓ {agent} config valid')
+            except Exception as e:
+                print(f'✗ {agent} config invalid: {e}')
+                sys.exit(1)
+        "
+
+    - name: Run integration tests
+      run: |
+        cd perfect-claude-env
+        python tests/test_mcp_integration.py
+
+  build-and-push:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service:
+          - knowledge-base-python
+          - vector-search-python
+          - security-wrapper
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/mcp-${{ matrix.service }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./perfect-claude-env/mcp-servers/${{ matrix.service }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+  deploy-test:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Start full stack
+      run: |
+        cd perfect-claude-env
+        docker-compose up -d --build
+
+    - name: Wait for services to be healthy
+      run: |
+        cd perfect-claude-env
+        timeout 300 bash -c 'until docker-compose ps | grep -q "healthy"; do sleep 5; done'
+
+    - name: Run smoke tests
+      run: |
+        cd perfect-claude-env
+        # Test Qdrant
+        curl -f http://localhost:6333/health || exit 1
+        
+        # Test Redis
+        docker-compose exec -T redis redis-cli ping || exit 1
+        
+        # Test Prometheus
+        curl -f http://localhost:9090/-/healthy || exit 1
+        
+        # Test Grafana
+        curl -f http://localhost:3000/api/health || exit 1
+
+    - name: Generate coverage report
+      run: |
+        cd perfect-claude-env
+        python -m pytest tests/ --cov=mcp-servers --cov-report=xml --cov-report=html
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./perfect-claude-env/coverage.xml
+        flags: integration
+        name: codecov-umbrella
+
+    - name: Cleanup
+      if: always()
+      run: |
+        cd perfect-claude-env
+        docker-compose down -v
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: './perfect-claude-env'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
