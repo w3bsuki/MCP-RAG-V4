@@ -1,0 +1,36 @@
+{
+  "name": "@mcp-rag-v4/server",
+  "version": "1.0.0",
+  "description": "TypeScript MCP server with proper protocol compliance",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "zod": "^3.22.4",
+    "winston": "^3.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "rate-limiter-flexible": "^3.0.0",
+    "ioredis": "^5.3.2",
+    "p-queue": "^7.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/jsonwebtoken": "^9.0.5",
+    "typescript": "^5.3.0",
+    "tsx": "^4.6.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.10",
+    "ts-jest": "^29.1.1",
+    "eslint": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0"
+  }
+}
